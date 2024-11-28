@@ -11,7 +11,7 @@ vector<vector<int>> parse_input(string filename)
         in >> nVertices >> nEdges;
 
         // Create the graph
-        vector<vector<int>> graph(nEdges, vector<int>());
+        vector<vector<int>> graph(nVertices, vector<int>());
 
         // Read the edges
         int from, to;

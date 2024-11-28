@@ -40,8 +40,13 @@ void test_serial_approces(vector<vector<int>> graph)
 
 int main(int argc, char* argv[])
 {
+    string filename = "input/small.txt";
+    if(argc > 1)
+        filename = argv[1];
+
     //Read the input file
-    vector<vector<int>> graph = parse_input("input/small.txt");
+    vector<vector<int>> graph = parse_input(filename);
+    cout << "Graph size: " << graph.size() << endl;
 
     //Print the graph
     //print_graph(graph);
