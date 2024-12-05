@@ -135,5 +135,3 @@ namespace CacheUtils {
 #define PAPI_STOP(RANK, MPI_DATA)
 
 #endif
-
-#endif //PARALLEL_MINIMUM_CUT_UTILS_HPP
