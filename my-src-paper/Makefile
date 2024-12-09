@@ -1,6 +1,7 @@
-CXX = g++
-CXXFLAGS = -std=c++11 -Wall -Werror -O2 -fopenmp
-SRC = $(wildcard utils/*.cpp) serial_cc.cpp 
+CXX = mpiCC # g++
+CXXFLAGS = -std=c++11 -Wall -Wextra -O2 -fopenmp
+#-Werror: every warning is treated as an error.
+SRC = $(wildcard utils/*.cpp) parallel_cc.cpp  #serial_cc.cpp
 OBJ = $(SRC:.cpp=.o)
 TARGET = connected_components.out
 
