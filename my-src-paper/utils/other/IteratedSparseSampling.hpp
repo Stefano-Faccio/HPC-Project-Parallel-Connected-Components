@@ -6,7 +6,6 @@
 #include <algorithm>
 #include <mpi.h>
 #include "DisjointSets.hpp"
-#include "utils.hpp"
 #include "GraphInputIterator.hpp"
 #include "MPIDatatype.hpp"
 
