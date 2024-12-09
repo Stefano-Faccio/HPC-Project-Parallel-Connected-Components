@@ -1,7 +1,9 @@
 #include "AdjacencyListGraph.hpp"
 #include <unordered_set>
 
-void AdjacencyListGraph::addEdge(unsigned from, unsigned to, Weight weight)
+using namespace std;
+
+void AdjacencyListGraph::addEdge(unsigned from, unsigned to)
 {
 	if (&edges_ != parent_edges_) {
 		edges_.assign(parent_edges_->begin(), parent_edges_->end());
@@ -11,12 +13,12 @@ void AdjacencyListGraph::addEdge(unsigned from, unsigned to, Weight weight)
 	assert(to < vertex_count_);
 
 	std::tie(from, to) = normalize(from, to);
-	edges_.push_back({ from, to, weight });
+	edges_.push_back({ from, to });
 }
 
 void AdjacencyListGraph::addEdge(Edge e)
 {
-	addEdge(e.from, e.to, e.weight);
+	addEdge(e.from, e.to);
 }
 
 unsigned AdjacencyListGraph::maxVertexID() const
@@ -46,7 +48,7 @@ std::unique_ptr<AdjacencyListGraph> AdjacencyListGraph::compact() const {
 	}
 
 	for (auto const & edge : *parent_edges_)
-		result->addEdge(mapping.at(edge.from), mapping.at(edge.to), edge.weight);
+		result->addEdge(mapping.at(edge.from), mapping.at(edge.to));
 
 	return result;
 }
@@ -81,37 +83,7 @@ void AdjacencyListGraph::contractEdge(unsigned from, unsigned to)
 }
 
 
-/**
- * Remove loop and merge edges after a series of weaklyContractEdge() calls
- */
-void AdjacencyListGraph::finalizeContractionPhase(sitmo::prng_engine * random)
-{
-	// Rename & renormalize all the edges
-	for (auto & edge : edges_)
-		std::tie(edge.to, edge.from) = normalize(disjoint_sets_.find(edge.to),  disjoint_sets_.find(edge.from));
-
-	std::sort(edges_.begin(), edges_.end());
-
-	EdgeList::size_type next_index = { 0 };
-
-	for (auto edge = edges_.begin(); edge != edges_.end(); ++edge) {
-		if (edge->from == edge->to)
-			continue; // Remove loop
-
-		// Merge pedges
-		if (next_index > 0 && (edge->from == edges_.at(next_index - 1).from) && (edge->to == edges_.at(next_index - 1).to)) {
-			edges_.at(next_index - 1).weight += edge->weight;
-		} else {
-			// Neither loop nor pedge
-			edges_.at(next_index++) = *edge;
-		}
-	}
-
-	edges_.resize(next_index);
-	parent_edges_ = &edges_;
-}
-
-AdjacencyListGraph::EdgeList const & AdjacencyListGraph::edges() const
+AdjacencyListGraph::vector<Edge> const & AdjacencyListGraph::edges() const
 {
 	return *parent_edges_;
 }

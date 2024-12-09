@@ -1,11 +1,13 @@
 #include "GraphInputIterator.hpp"
 
+using namespace std;
+
 void GraphInputIterator::open()
 {
 	read_ = 0;
-	file_.open(name_, std::ios::in);
-	// TODO allow multiline comments
-	file_.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+	file_.open(name_, ios::in);
+	// Skip comments
+	file_.ignore(numeric_limits<streamsize>::max(), '\n');
 	file_ >> vertices_;
 	file_ >> lines_;
 }
@@ -17,7 +19,7 @@ GraphInputIterator::Iterator GraphInputIterator::begin()
 
 GraphInputIterator::Iterator GraphInputIterator::end()
 {
-	return Iterator(true, *this, { 0, 0, 0 });
+	return Iterator(true, *this, { 0, 0 });
 }
 
 void GraphInputIterator::reopen()
@@ -26,11 +28,10 @@ void GraphInputIterator::reopen()
 	open();
 }
 
-AdjacencyListGraph::Edge GraphInputIterator::read()
+Edge GraphInputIterator::read()
 {
-	unsigned f, t, w;
-	file_ >> f >> t >> w;
+	u_int32_t from, to;
+	file_ >> from >> to;
 	read_++;
-//	assert (f != t);
-	return { f , t , w }; // Iterators FTW
+	return {from, to};
 }

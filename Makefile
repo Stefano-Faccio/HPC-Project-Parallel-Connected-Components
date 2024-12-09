@@ -8,7 +8,7 @@ CFLAGS = -Wall -Werror -O2 -fopenmp
 TARGET = parallel_connected_components.out
 
 # Source files
-SRCS = $(wildcard *.cpp) $(wildcard input/*.cpp) $(wildcard serial_approaches/*.cpp) $(wildcard parallel_approaches/*.cpp) $(wildcard utils/*.cpp)
+SRCS = $(wildcard *.cpp) $(wildcard input/*.cpp) $(wildcard serial_approaches/*.cpp) $(wildcard parallel_approaches/*.cpp)
 
 # Object files
 OBJS = $(SRCS:.cpp=.o)
