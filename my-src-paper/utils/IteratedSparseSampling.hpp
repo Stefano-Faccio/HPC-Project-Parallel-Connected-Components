@@ -9,22 +9,19 @@
 #include "utils.hpp"
 #include "GraphInputIterator.hpp"
 #include "MPIDatatype.hpp"
-#include "sorting/SamplingSorter.hpp"
 
-
-
-use namespace std;
+using namespace std;
 
 /**
  * Implements ISS primitives
  *
  * This class performs the logic of a node within a group that is specified by the communicator.
  *
- * EdgeT must have publicly accessible properties
+ * Edge must have publicly accessible properties
  * `uint32_t from, to`
- * and be have a corresponding `MPIDatatype<EdgeT>` instantiation
+ * and be have a corresponding `MPIDatatype<Edge>` instantiation
  */
-template<typename EdgeT>
+
 class IteratedSparseSampling {
 protected:
 
@@ -32,10 +29,9 @@ protected:
 
 	MPI_Comm communicator_;
 	int rank_, color_, group_size_;
-	vector<EdgeT> edges_slice_;
+	vector<Edge> edges_slice_;
 	const float epsilon_ = 0.1f;
 	int32_t seed_with_offset_;
-	sitmo::prng_engine random_engine_;
 	MPI_Datatype mpi_edge_t_;
 	uint32_t target_size_;
 	uint32_t vertex_count_;
@@ -54,14 +50,13 @@ public:
 			color_(color),
 			group_size_(group_size),
 			seed_with_offset_(seed_with_offset),
-			random_engine_(seed_with_offset),
 			target_size_(target_size),
 			vertex_count_(vertex_count),
 			initial_vertex_count_(vertex_count),
 			initial_edge_count_(edge_count)
 	{
 		MPI_Comm_rank(communicator_, &rank_);
-		mpi_edge_t_ = MPIDatatype<EdgeT>::constructType();
+		mpi_edge_t_ = MPIDatatype<Edge>::constructType();
 	}
 
 	~IteratedSparseSampling() {
@@ -93,15 +88,15 @@ public:
 	void broadcastSlice(MPI_Comm equivalence_comm) {
 		uint32_t slice_size = edges_slice_.size();
 
-		MPI::Bcast(
+		MPI_Bcast(
 				&slice_size,
 				1,
-				MPI_uint32_t,
+				MPI_UINT32_T,
 				0,
 				equivalence_comm
 		);
 
-		MPI::Bcast(
+		MPI_Bcast(
 				edges_slice_.data(),
 				edges_slice_.size(),
 				mpi_edge_t_,
@@ -116,7 +111,7 @@ public:
 	void receiveSlice(MPI_Comm equivalence_comm) {
 		uint32_t slice_size;
 
-		MPI::Bcast(
+		MPI_Bcast(
 				&slice_size,
 				1,
 				MPI_UINT32_T,
@@ -126,7 +121,7 @@ public:
 
 		edges_slice_.resize(slice_size);
 
-		MPI::Bcast(
+		MPI_Bcast(
 				edges_slice_.data(),
 				edges_slice_.size(),
 				mpi_edge_t_,
@@ -135,7 +130,7 @@ public:
 		);
 	}
 
-	void setSlice(vector<EdgeT> edges) {
+	void setSlice(vector<Edge> edges) {
 		edges_slice_ = edges;
 	}
 
@@ -145,10 +140,10 @@ public:
 	 *                   vertex_map must be of the right size (number of vertices before applying the mapping).
 	 */
 	void receiveAndApplyMapping(vector<uint32_t> & vertex_map) {
-		MPI::Bcast(vertex_map.data(), vertex_map.size(), MPI_UINT32_T, root_rank_, communicator_);
+		MPI_Bcast(vertex_map.data(), vertex_map.size(), MPI_UINT32_T, root_rank_, communicator_);
 
 		applyMapping(vertex_map);
-		MPI::Bcast(&vertex_count_, 1, MPI_UINT32_T, root_rank_, communicator_);
+		MPI_Bcast(&vertex_count_, 1, MPI_UINT32_T, root_rank_, communicator_);
 	}
 
 	/**
@@ -156,7 +151,7 @@ public:
 	 * @param vertex_map
 	 */
 	void applyMapping(const vector<uint32_t> & vertex_map) {
-		vector<EdgeT> updated_edges;
+		vector<Edge> updated_edges;
 
 		for (auto edge : edges_slice_) {
 			edge.from = vertex_map.at(edge.from);
@@ -177,7 +172,7 @@ public:
 	 * @param true if the described prefix exists
 	 * I don't trust this code, it has just been copied over -- My past self has written it
 	 */
-	bool prefixConnectedComponents(const vector<EdgeT> & edges,
+	bool prefixConnectedComponents(const vector<Edge> & edges,
 								   vector<uint32_t> & vertex_map,
 								   uint32_t components_count,
 								   uint32_t & resulting_vertex_count)
@@ -226,7 +221,7 @@ public:
 	 * @param edge_count
 	 * @return The edge sample
 	 */
-	virtual vector<EdgeT> sample(uint32_t edge_count) = 0;
+	virtual vector<Edge> sample(uint32_t edge_count) = 0;
 
 	uint32_t initiateSampling(vector<int> edges_per_processor, vector<uint32_t> & vertex_map) {
 		uint32_t number_of_edges_to_sample = accumulate(edges_per_processor.begin(), edges_per_processor.end(), 0u);
@@ -235,18 +230,18 @@ public:
 		 * Scatter sampling requests
 		 */
 		int edges_to_sample_locally;
-		MPI::Scatter(edges_per_processor.data(), 1, MPI_INT, &edges_to_sample_locally, 1, MPI_INT, 0, communicator_);
+		MPI_Scatter(edges_per_processor.data(), 1, MPI_INT, &edges_to_sample_locally, 1, MPI_INT, 0, communicator_);
 
 		/**
 		 * Take part in sampling
 		 */
-		vector<EdgeT> samples = sample(edges_to_sample_locally);
+		vector<Edge> samples = sample(edges_to_sample_locally);
 
 		/**
 		 * Gather samples
 		 */
 		// Allocate space
-		vector<EdgeT> global_samples(number_of_edges_to_sample);
+		vector<Edge> global_samples(number_of_edges_to_sample);
 		// Calculate displacement vector
 		vector<int> relative_displacements(edges_per_processor);
 		relative_displacements.insert(relative_displacements.begin(), 0); // Start at offset zero
@@ -256,7 +251,7 @@ public:
 		partial_sum(relative_displacements.begin(), relative_displacements.end(), back_inserter(displacements));
 
 		assert(master());
-		MPI::Gatherv(
+		MPI_Gatherv(
 				samples.data(),
 				edges_to_sample_locally,
 				mpi_edge_t_,
@@ -273,7 +268,7 @@ public:
 		/**
 		 * Shuffle to ensure random order for the prefix
 		 */
-		shuffle(global_samples.begin(), global_samples.end(), random_engine_);
+		//shuffle(global_samples.begin(), global_samples.end());
 
 		/**
 		 * Incremental prefix scan
@@ -297,11 +292,11 @@ public:
 	 */
 	void acceptSamplingRequest() {
 		int edges_to_sample_locally;
-		MPI::Scatter(nullptr, 1, MPI_INT, &edges_to_sample_locally, 1, MPI_INT, 0, communicator_);
+		MPI_Scatter(nullptr, 1, MPI_INT, &edges_to_sample_locally, 1, MPI_INT, 0, communicator_);
 
-		vector<EdgeT> samples = sample(edges_to_sample_locally);
+		vector<Edge> samples = sample(edges_to_sample_locally);
 
-		MPI::Gatherv(
+		MPI_Gatherv(
 				samples.data(),
 				edges_to_sample_locally,
 				mpi_edge_t_,

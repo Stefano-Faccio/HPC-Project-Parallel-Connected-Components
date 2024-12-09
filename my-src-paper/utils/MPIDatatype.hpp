@@ -1,6 +1,7 @@
 #pragma once
 
 #include <mpi.h>
+#include "Edge.hpp"
 
 /**
  * Trait container to allow external implementation for any type
@@ -34,5 +35,3 @@ struct MPIDatatype<Edge> {
 		return edge_type;
 	};
 };
-
-#endif //PARALLEL_MINIMUM_CUT_MPIDATATYPE_HPP

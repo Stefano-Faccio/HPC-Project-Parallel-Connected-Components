@@ -22,7 +22,7 @@ private:
 	vector<u_int32_t> edgesAvailablePerProcessor();
 
 public:
-	using IteratedSparseSampling<Edge>::IteratedSparseSampling;
+	using IteratedSparseSampling::IteratedSparseSampling;
 
 	//The root will receive the labels of the connected components in the vector
 	u_int32_t connectedComponents(vector<u_int32_t> & connected_components);
