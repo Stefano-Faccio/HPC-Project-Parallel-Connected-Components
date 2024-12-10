@@ -3,6 +3,7 @@
 #include <vector>
 #include "utils/GraphInputIterator.hpp"
 #include "utils/SparseSampling.hpp"
+#include <cstdint>
 
 using namespace std;
 
@@ -30,7 +31,7 @@ int main(int argc, char* argv[])
 
 	MPI_Barrier(MPI_COMM_WORLD);
 
-	vector<u_int32_t> components;
+	vector<uint32_t> components;
 	int number_of_components = 0;//iteration_sampler.connectedComponents(components);
 
 	if (rank == 0) {

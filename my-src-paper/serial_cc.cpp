@@ -2,6 +2,7 @@
 #include "utils/DisjointSets.hpp"
 #include <unordered_map>
 #include <iostream>
+#include <cstdint>
 
 using namespace std;
 
@@ -17,9 +18,9 @@ int main(int argc, char* argv[])
 	cout << "Vertex count: " << input.vertexCount() << " Edge count: " << input.edgeCount() << endl;
 	
 	//Create a disjoint set with all the vertices 
-	DisjointSets<u_int32_t> disjoint_set(input.vertexCount());
+	DisjointSets<uint32_t> disjoint_set(input.vertexCount());
 
-	u_int32_t real_edge_count = 0;
+	uint32_t real_edge_count = 0;
 	for (auto edge : input) {
 		//Check that the edge is valid i.e. the nodes are in the graph
 		assert(edge.from < input.vertexCount());
@@ -32,9 +33,9 @@ int main(int argc, char* argv[])
 	}
 
 	//Count the number of connected components
-	unordered_map<u_int32_t, u_int32_t> components;
-	for (u_int32_t i = 0; i < input.vertexCount(); i++) {
-		u_int32_t rep = disjoint_set.find(i);
+	unordered_map<uint32_t, uint32_t> components;
+	for (uint32_t i = 0; i < input.vertexCount(); i++) {
+		uint32_t rep = disjoint_set.find(i);
 		if (components.find(rep) == components.end()) {
 			components.insert(make_pair(rep, 1));
 		} else {

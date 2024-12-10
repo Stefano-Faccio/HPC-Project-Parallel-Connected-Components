@@ -3,6 +3,7 @@
 #include <boost/pending/disjoint_sets.hpp>
 #include <vector>
 #include <iostream>
+#include <cstdint>
 
 using namespace std;
 using namespace boost;

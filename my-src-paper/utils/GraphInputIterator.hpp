@@ -7,6 +7,7 @@
 #include <limits>
 #include <cassert>
 #include <vector>
+#include <cstdint>
 #include "Edge.hpp"
 
 using namespace std;
@@ -15,8 +16,8 @@ class GraphInputIterator
 {
 private:
 	ifstream file_;
-	u_int32_t lines_, read_;
-	u_int32_t vertices_;
+	uint32_t lines_, read_;
+	uint32_t vertices_;
 	string name_;
 
 	// Open the file
@@ -33,7 +34,7 @@ private:
 	// Read the next edge from the file
 	Edge read()
 	{
-		u_int32_t from, to;
+		uint32_t from, to;
 		file_ >> from >> to;
 		read_++;
 		return {from, to};
@@ -48,8 +49,8 @@ public:
 
 	~GraphInputIterator() { file_.close(); }
 
-	u_int32_t vertexCount() { return vertices_; }
-	u_int32_t edgeCount() { return lines_; }
+	uint32_t vertexCount() { return vertices_; }
+	uint32_t edgeCount() { return lines_; }
 
 	// Reset the file stream in order to read the input again
 	void reopen()
@@ -61,11 +62,11 @@ public:
 	/*
 	//Load a slice of the graph edges: useful for parallel processing
 	void loadSlice(vector<Edge>& edges_slice, int rank, int group_size) {
-		u_int32_t slice_portion = edgeCount() / group_size;
-		u_int32_t slice_from = slice_portion * rank;
+		uint32_t slice_portion = edgeCount() / group_size;
+		uint32_t slice_from = slice_portion * rank;
 		// The last node takes any leftover edges
 		bool last = rank == group_size - 1;
-		u_int32_t slice_to = last ? edgeCount() : slice_portion * (rank + 1);
+		uint32_t slice_to = last ? edgeCount() : slice_portion * (rank + 1);
 
 		GraphInputIterator::Iterator iterator = begin();
 		while (!iterator.end_) {
@@ -81,7 +82,7 @@ public:
 	// Model of http://en.cppreference.com/w/cpp/concept/InputIterator concept
 	class Iterator
 	{
-		unsigned position_ = 0;
+		uint32_t position_ = 0;
 
 	public:
 		bool end_;
@@ -100,7 +101,7 @@ public:
 			return &edge_;
 		}
 
-		unsigned position() const
+		uint32_t position() const
 		{
 			return position_;
 		}

@@ -3,12 +3,13 @@
 #include <iostream>
 #include <tuple>
 #include <mpi.h>
+#include <cstdint>
 
 using namespace std;
 
 struct Edge
 {
-    u_int32_t from, to;
+    uint32_t from, to;
 
     inline bool operator<(Edge const &other) const
     {
@@ -45,7 +46,7 @@ struct Edge
     }
 };
 
-static_assert(sizeof(Edge) == 8, "Expecting 4B for a u_int32_t");
+static_assert(sizeof(Edge) == 8, "Expecting 4B for a uint32_t");
 
 struct MPIEdge
 {
