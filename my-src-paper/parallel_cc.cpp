@@ -10,10 +10,7 @@ using namespace std;
 // Seed for the random number generator
 int32_t seed = 17;
 
-int foo()
-{
-	return 0;
-}
+int foonkfnsd();
 
 int main(int argc, char *argv[])
 {
@@ -60,4 +57,10 @@ int main(int argc, char *argv[])
 
 	// Close MPI
 	MPI_Finalize();
+}
+
+
+int foonkfnsd()
+{
+	return 0;
 }

@@ -22,19 +22,17 @@ private:
 	// MPI related variables
 	MPI_Comm communicator_;				// MPI communicator
 	MPI_Datatype mpi_edge_t_;			// MPI edge type (MPI_Datatype)
-	int32_t rank_, group_size_, color_; // Rank of the process, size of the group, color of the process
+	int32_t color_, group_size_, rank_; // color of the process, size of the group , Rank of the process
+	mt19937 random_engine_; // Mersenne Twister 19937 generator
 
 	// Graph related variables
+	uint32_t target_size_, vertex_count_, initial_vertex_count_, initial_edge_count_;
 	vector<Edge> edges_slice_; // Slice of the graph edges: block of edges distributed to each process
-	uint32_t target_size_;
-	uint32_t vertex_count_;
-	uint32_t initial_vertex_count_, initial_edge_count_;
 
 	// Other variables
 	const float epsilon_ = 0.09f;
 	const float delta_ = 0.2f;
-	mt19937 random_engine_; // Mersenne Twister 19937 generator
-
+	
 public:
 	// Constructor
 	SparseSampling(MPI_Comm communicator, uint32_t color, int32_t group_size, int32_t seed, int32_t target_size, uint32_t vertex_count, uint32_t edge_count) : communicator_(communicator), color_(color), group_size_(group_size), random_engine_(seed), target_size_(target_size), vertex_count_(vertex_count), initial_vertex_count_(vertex_count), initial_edge_count_(edge_count)
