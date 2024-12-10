@@ -1,16 +1,14 @@
 #include <mpi.h>
-#include <iostream>
-#include <vector>
 #include "utils/GraphInputIterator.hpp"
 #include "utils/SparseSampling.hpp"
+#include <iostream>
+#include <vector>
 #include <cstdint>
 
 using namespace std;
 
 // Seed for the random number generator
 int32_t seed = 17;
-
-int foonkfnsd();
 
 int main(int argc, char *argv[])
 {
@@ -57,10 +55,4 @@ int main(int argc, char *argv[])
 
 	// Close MPI
 	MPI_Finalize();
-}
-
-
-int foonkfnsd()
-{
-	return 0;
 }

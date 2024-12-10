@@ -1,8 +1,10 @@
 CXX = mpiCC # g++
-CXXFLAGS = -std=c++11 -O2 -fopenmp -Wall -pedantic
+CXXFLAGS = -std=c++11 -O2 -fopenmp -Wall -pedantic -Wunused
+#
 #-Werror: every warning is treated as an error.
 #-Wextra 
-SRC = parallel_cc.cpp $(wildcard utils/*.cpp)   #serial_cc.cpp
+FILENAME = parallel_cc.cpp #serial_cc.cpp
+SRC = $(FILENAME) $(wildcard utils/*.cpp)   
 OBJ = $(SRC:.cpp=.o)
 TARGET = connected_components.out
 
@@ -13,6 +15,7 @@ $(TARGET): $(OBJ)
 
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
+#bear -- make
 
 clean:
 	rm -f $(OBJ) $(TARGET)
