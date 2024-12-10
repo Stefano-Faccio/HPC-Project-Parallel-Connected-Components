@@ -2,7 +2,7 @@
 #include <iostream>
 #include <vector>
 #include "utils/GraphInputIterator.hpp"
-#include "utils/UnweightedIteratedSparseSampling.hpp"
+#include "utils/SparseSampling.hpp"
 
 using namespace std;
 
@@ -22,10 +22,10 @@ int main(int argc, char* argv[])
 	MPI_Comm_size(MPI_COMM_WORLD, &p);
 
 	
-	UnweightedIteratedSparseSampling sampler(MPI_COMM_WORLD, (int32_t)0, p, (int32_t)1, input.vertexCount(), input.edgeCount());
+	SparseSampling sampler(MPI_COMM_WORLD, (int32_t)0, p, (int32_t)1, input.vertexCount(), input.edgeCount());
 	/*
 	sampler.loadSlice(input);
-	UnweightedIteratedSparseSampling iteration_sampler(sampler);
+	SparseSampling iteration_sampler(sampler);
 	*/
 
 	MPI_Barrier(MPI_COMM_WORLD);
