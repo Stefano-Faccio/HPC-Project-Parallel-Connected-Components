@@ -18,12 +18,13 @@ int main(int argc, char* argv[])
 
 	GraphInputIterator input(argv[1]);
 	int32_t rank, p;
+	int32_t seed = 0;
 
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	MPI_Comm_size(MPI_COMM_WORLD, &p);
 
 	
-	SparseSampling sampler(MPI_COMM_WORLD, (int32_t)0, p, (int32_t)1, input.vertexCount(), input.edgeCount());
+	SparseSampling sampler(MPI_COMM_WORLD, (int32_t)0, p, seed + rank, (int32_t)1, input.vertexCount(), input.edgeCount());
 	/*
 	sampler.loadSlice(input);
 	SparseSampling iteration_sampler(sampler);

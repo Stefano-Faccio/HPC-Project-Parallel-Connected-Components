@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <random>
 
 using namespace std;
 
@@ -26,6 +27,7 @@ private:
 	uint32_t target_size_;
 	uint32_t vertex_count_;
 	uint32_t initial_vertex_count_, initial_edge_count_;
+	mt19937 random_engine_;
 
 	uint32_t countEdges()
 	{
@@ -105,7 +107,7 @@ private:
 	}
 
 public:
-	SparseSampling(MPI_Comm communicator, uint32_t color, int32_t group_size, int32_t target_size, uint32_t vertex_count, uint32_t edge_count) : communicator_(communicator), color_(color), group_size_(group_size), target_size_(target_size), vertex_count_(vertex_count), initial_vertex_count_(vertex_count), initial_edge_count_(edge_count)
+	SparseSampling(MPI_Comm communicator, uint32_t color, int32_t group_size, int32_t seed, int32_t target_size, uint32_t vertex_count, uint32_t edge_count) : communicator_(communicator), color_(color), group_size_(group_size), random_engine_(seed), target_size_(target_size), vertex_count_(vertex_count), initial_vertex_count_(vertex_count), initial_edge_count_(edge_count)
 	{
 		MPI_Comm_rank(communicator_, &rank_);
 		mpi_edge_t_ = MPIEdge::constructType();
@@ -188,6 +190,26 @@ public:
 		}
 	}
 
+	vector<Edge> sample(uint32_t edge_count)
+	{
+		vector<Edge> edges;
+		uint32_t size = edges_slice_.size();
+
+		if (edge_count == edges_slice_.size())
+		{
+			return edges_slice_;
+		}
+		else
+		{
+			for (uint32_t i = 0; i < edge_count; i++)
+			{
+				edges.push_back(edges_slice_.at(random_engine_() % size));
+			}
+		}
+
+		return edges; // NRVO
+	}
+
 	uint32_t initiateSampling(vector<int32_t> edges_per_processor, vector<uint32_t> &vertex_map)
 	{
 		uint32_t number_of_edges_to_sample = accumulate(edges_per_processor.begin(), edges_per_processor.end(), 0u);
@@ -233,7 +255,7 @@ public:
 		/**
 		 * Shuffle to ensure random order for the prefix
 		 */
-		// shuffle(global_samples.begin(), global_samples.end());
+		shuffle(global_samples.begin(), global_samples.end(), random_engine_);
 
 		/**
 		 * Incremental prefix scan
@@ -251,7 +273,7 @@ public:
 		return resulting_vertex_count;
 	}
 
-		/**
+	/**
 	 * @param edges array of {edge_count >= 0} edges
 	 * @param [out] vertices_map preallocated map of {vertex_count >= 0} vertices. Will be filled with partitions label from [0, vertex_count)
 	 * @param components_count the desired number of connected components
@@ -259,14 +281,15 @@ public:
 	 * @param true if the described prefix exists
 	 * I don't trust this code, it has just been copied over -- My past self has written it
 	 */
-	bool prefixConnectedComponents(const vector<Edge> & edges,
-								   vector<uint32_t> & vertex_map,
+	bool prefixConnectedComponents(const vector<Edge> &edges,
+								   vector<uint32_t> &vertex_map,
 								   uint32_t components_count,
-								   uint32_t & resulting_vertex_count)
+								   uint32_t &resulting_vertex_count)
 	{
 		DisjointSets<uint32_t> dsets(vertex_map.size());
 
-		if (components_count == 0 || vertex_map.size() == 0) {
+		if (components_count == 0 || vertex_map.size() == 0)
+		{
 			return true;
 		}
 
@@ -274,16 +297,19 @@ public:
 		bool found = false;
 
 		uint32_t i = 0;
-		for (; i < edges.size() && components_active > components_count; i++) {
+		for (; i < edges.size() && components_active > components_count; i++)
+		{
 			uint32_t v1_set = dsets.find(edges.at(i).from),
-					v2_set = dsets.find(edges.at(i).to);
-			if (v1_set != v2_set) {
+					 v2_set = dsets.find(edges.at(i).to);
+			if (v1_set != v2_set)
+			{
 				components_active--;
 				dsets.unify(v1_set, v2_set);
 			}
 		}
 
-		if (components_active == components_count) {
+		if (components_active == components_count)
+		{
 			found = true;
 		}
 
@@ -291,8 +317,10 @@ public:
 		const uint64_t mapping_undefined = -1l;
 		vector<uint64_t> component_labels(vertex_map.size(), mapping_undefined);
 		uint32_t next_label = 0;
-		for (uint32_t j = 0; j < vertex_map.size(); j++) {
-			if (component_labels.at(dsets.find(j)) == mapping_undefined) {
+		for (uint32_t j = 0; j < vertex_map.size(); j++)
+		{
+			if (component_labels.at(dsets.find(j)) == mapping_undefined)
+			{
 				component_labels.at(dsets.find(j)) = next_label++;
 			}
 
@@ -308,46 +336,50 @@ public:
 	 * @param vertex_map The root must contain a valid vertex mapping to apply.
 	 *                   vertex_map must be of the right size (number of vertices before applying the mapping).
 	 */
-	void receiveAndApplyMapping(vector<uint32_t> & vertex_map) {
+	void receiveAndApplyMapping(vector<uint32_t> &vertex_map)
+	{
 		MPI_Bcast(vertex_map.data(), vertex_map.size(), MPI_UINT32_T, 0, communicator_);
 
 		applyMapping(vertex_map);
 		MPI_Bcast(&vertex_count_, 1, MPI_UINT32_T, 0, communicator_);
 	}
 
-		/**
+	/**
 	 * Match `initiateSampling` at non-root nodes
 	 */
-	void acceptSamplingRequest() {
+	void acceptSamplingRequest()
+	{
 		uint32_t edges_to_sample_locally;
 		MPI_Scatter(nullptr, 1, MPI_INT, &edges_to_sample_locally, 1, MPI_INT, 0, communicator_);
 
 		vector<Edge> samples = sample(edges_to_sample_locally);
 
 		MPI_Gatherv(
-				samples.data(),
-				edges_to_sample_locally,
-				mpi_edge_t_,
-				nullptr,
-				nullptr,
-				nullptr,
-				mpi_edge_t_,
-				0,
-				communicator_
-		);
+			samples.data(),
+			edges_to_sample_locally,
+			mpi_edge_t_,
+			nullptr,
+			nullptr,
+			nullptr,
+			mpi_edge_t_,
+			0,
+			communicator_);
 	}
 
 	/**
 	 * Apply the map to all endpoints, dropping loops
 	 * @param vertex_map
 	 */
-	void applyMapping(const vector<uint32_t> & vertex_map) {
+	void applyMapping(const vector<uint32_t> &vertex_map)
+	{
 		vector<Edge> updated_edges;
 
-		for (auto edge : edges_slice_) {
+		for (auto edge : edges_slice_)
+		{
 			edge.from = vertex_map.at(edge.from);
 			edge.to = vertex_map.at(edge.to);
-			if (edge.from != edge.to) {
+			if (edge.from != edge.to)
+			{
 				updated_edges.push_back(edge);
 			}
 		}
@@ -360,5 +392,5 @@ public:
 	 * @param edge_count
 	 * @return The edge sample
 	 */
-	virtual vector<Edge> sample(uint32_t edge_count) = 0;
+	// virtual vector<Edge> sample(uint32_t edge_count) = 0;
 };
