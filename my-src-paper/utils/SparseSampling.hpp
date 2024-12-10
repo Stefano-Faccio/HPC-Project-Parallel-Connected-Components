@@ -37,17 +37,17 @@ private:
 	}
 
 	// A vector whose entries correspond to the number of edges to sample at that processor
-	vector<int32_t> edgesToSamplePerProcessor(vector<uint32_t> edges_available_per_processor)
+	vector<int32_t> edgesToSamplePerProcessor(vector<int32_t> edges_available_per_processor)
 	{
 		uint32_t total_edges = (uint32_t)accumulate(edges_available_per_processor.begin(), edges_available_per_processor.end(), 0);
 		uint32_t number_of_edges_to_sample = min(uint32_t(pow((float)initial_vertex_count_, 1 + epsilon_ / 2) * (1 + delta_)), total_edges);
-		uint32_t sparsity_threshold = uint32_t(float(3) / (delta_ * delta_) * log(group_size_ / 0.9f));
+		int32_t sparsity_threshold = int32_t(float(3) / (delta_ * delta_) * log(group_size_ / 0.9f));
 		uint32_t remaining_edges = number_of_edges_to_sample;
 
 		vector<int32_t> edges_per_processor(group_size_, 0);
 
 		// First look at processors with few edges
-		for (uint32_t i = 0; i < group_size_; i++)
+		for (int32_t i = 0; i < group_size_; i++)
 		{
 			if (edges_available_per_processor.at(i) <= sparsity_threshold)
 			{
@@ -60,7 +60,7 @@ private:
 
 		// Assign proportional share of edges to every processor. Depending on the balance, this is necessary to
 		// counter accumulating +-1 differences. This also ensures that empty slices will not be asked to sample anything.
-		for (uint32_t i = 0; i < group_size_; i++)
+		for (int32_t i = 0; i < group_size_; i++)
 		{
 			if (edges_per_processor.at(i) != 0)
 			{
@@ -68,7 +68,7 @@ private:
 			}
 
 			edges_per_processor.at(i) = min(
-				(uint32_t)(double(number_of_edges_to_sample) * edges_available_per_processor.at(i) / total_edges),
+				(int32_t)(double(number_of_edges_to_sample) * edges_available_per_processor.at(i) / total_edges),
 				edges_available_per_processor.at(i));
 			remaining_edges -= edges_per_processor.at(i);
 		}
@@ -80,7 +80,7 @@ private:
 		{
 			if (edges_available_per_processor.at(spillover) > edges_per_processor.at(spillover))
 			{
-				uint32_t delta = min(edges_available_per_processor.at(spillover) - edges_per_processor.at(spillover), (uint32_t)remaining_edges);
+				int32_t delta = min(edges_available_per_processor.at(spillover) - edges_per_processor.at(spillover), (int32_t)remaining_edges);
 				edges_per_processor.at(spillover) += delta;
 				remaining_edges -= delta;
 			}
@@ -91,10 +91,10 @@ private:
 	}
 
 	// Edges per rank, at root only
-	vector<uint32_t> edgesAvailablePerProcessor()
+	vector<int32_t> edgesAvailablePerProcessor()
 	{
 		uint32_t available = (uint32_t)edges_slice_.size(); // MPI displacement types are rather unfortunate
-		vector<uint32_t> edges_per_processor;
+		vector<int32_t> edges_per_processor;
 
 		if (master())
 		{
@@ -169,25 +169,10 @@ public:
 		return vertex_count_;
 	}
 
+	//Load a slice of the graph edges: useful for parallel processing
 	void loadSlice(GraphInputIterator &input)
 	{
-		// Exposing iterables is sort of hard, this will do for now
-		// TODO potentially make GII expose an iterable interface that also takes slicing into account
-		uint32_t slice_portion = input.edgeCount() / group_size_;
-		uint32_t slice_from = slice_portion * rank_;
-		// The last node takes any leftover edges
-		bool last = rank_ == group_size_ - 1;
-		uint32_t slice_to = last ? input.edgeCount() : slice_portion * (rank_ + 1);
-
-		GraphInputIterator::Iterator iterator = input.begin();
-		while (!iterator.end_)
-		{
-			if (iterator.position() >= slice_from && iterator.position() < slice_to)
-			{
-				edges_slice_.push_back({iterator->from, iterator->to});
-			}
-			++iterator;
-		}
+		input.loadSlice(edges_slice_, rank_, group_size_);
 	}
 
 	vector<Edge> sample(uint32_t edge_count)
