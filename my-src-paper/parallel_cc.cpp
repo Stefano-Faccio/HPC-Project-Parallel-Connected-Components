@@ -2,7 +2,7 @@
 #include <iostream>
 #include <vector>
 #include "utils/GraphInputIterator.hpp"
-//#include "utils/UnweightedIteratedSparseSampling.hpp"
+#include "utils/UnweightedIteratedSparseSampling.hpp"
 
 using namespace std;
 
@@ -21,17 +21,17 @@ int main(int argc, char* argv[])
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	MPI_Comm_size(MPI_COMM_WORLD, &p);
 
+	
+	UnweightedIteratedSparseSampling sampler(MPI_COMM_WORLD, (int32_t)0, p, (int32_t)1, input.vertexCount(), input.edgeCount());
 	/*
-	UnweightedIteratedSparseSampling sampler(MPI_COMM_WORLD, 0, p, rank, 1, input.vertexCount(), input.edgeCount());
 	sampler.loadSlice(input);
 	UnweightedIteratedSparseSampling iteration_sampler(sampler);
 	*/
 
-	vector<unsigned> components;
-
 	MPI_Barrier(MPI_COMM_WORLD);
 
-	int number_of_components = 0;
+	vector<u_int32_t> components;
+	int number_of_components = 0;//iteration_sampler.connectedComponents(components);
 
 	if (rank == 0) {
 		cout << fixed;
