@@ -1,6 +1,8 @@
 #pragma once
 
+//Boost libraries
 #include <boost/pending/disjoint_sets.hpp>
+//Standard libraries
 #include <vector>
 #include <iostream>
 #include <cstdint>

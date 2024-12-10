@@ -3,5 +3,13 @@
         "compare": "cpp",
         "cstdint": "cpp",
         "iostream": "cpp"
-    }
+    },
+    "C_Cpp.clang_tidy.enabled": true,
+    "C_Cpp.clang_tidy.path": "/usr/bin/clang-tidy",
+    "C_Cpp.clang_tidy.args": [
+      "--checks=*",
+      "--warnings-as-errors=*",
+      "--header-filter=.*"
+    ],
+    "C_Cpp.clang_tidy.useBuildPath": true
 }

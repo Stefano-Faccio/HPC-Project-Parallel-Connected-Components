@@ -10,6 +10,11 @@ using namespace std;
 // Seed for the random number generator
 int32_t seed = 17;
 
+int foo()
+{
+	return 0;
+}
+
 int main(int argc, char *argv[])
 {
 	if (argc != 2)

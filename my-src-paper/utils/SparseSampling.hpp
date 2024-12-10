@@ -1,9 +1,11 @@
 #pragma once
 
+#include <mpi.h>
+//Project headers
 #include "Edge.hpp"
 #include "GraphInputIterator.hpp"
 #include "DisjointSets.hpp"
-#include <mpi.h>
+//Standard libraries
 #include <iostream>
 #include <vector>
 #include <numeric>
@@ -14,25 +16,102 @@
 
 using namespace std;
 
-// Inherits from Edge
 class SparseSampling : public Edge
 {
 private:
-	MPI_Comm communicator_;
-	const float epsilon_ = 0.09f;
-	const float delta_ = 0.2f;
-	int32_t rank_, color_, group_size_;
-	vector<Edge> edges_slice_;
-	MPI_Datatype mpi_edge_t_;
+	// MPI related variables
+	MPI_Comm communicator_;				// MPI communicator
+	MPI_Datatype mpi_edge_t_;			// MPI edge type (MPI_Datatype)
+	int32_t rank_, group_size_, color_; // Rank of the process, size of the group, color of the process
+
+	// Graph related variables
+	vector<Edge> edges_slice_; // Slice of the graph edges: block of edges distributed to each process
 	uint32_t target_size_;
 	uint32_t vertex_count_;
 	uint32_t initial_vertex_count_, initial_edge_count_;
-	mt19937 random_engine_;
 
+	// Other variables
+	const float epsilon_ = 0.09f;
+	const float delta_ = 0.2f;
+	mt19937 random_engine_; // Mersenne Twister 19937 generator
+
+public:
+	// Constructor
+	SparseSampling(MPI_Comm communicator, uint32_t color, int32_t group_size, int32_t seed, int32_t target_size, uint32_t vertex_count, uint32_t edge_count) : communicator_(communicator), color_(color), group_size_(group_size), random_engine_(seed), target_size_(target_size), vertex_count_(vertex_count), initial_vertex_count_(vertex_count), initial_edge_count_(edge_count)
+	{
+		// Construct the MPI edge type
+		mpi_edge_t_ = MPIEdge::constructType();
+	}
+
+	// Destructor
+	~SparseSampling() {}
+
+	bool master() const
+	{
+		return rank_ == 0;
+	}
+
+	// The root will receive the labels of the connected components in the vector
+	uint32_t connectedComponents(vector<uint32_t> &connected_components)
+	{
+		if (vertex_count_ != initial_vertex_count_)
+		{
+			throw logic_error("Cannot perform CC on a shrinked graph");
+		}
+
+		if (master())
+		{
+			// Reset the connected components vector
+			connected_components.resize(vertex_count_);
+
+			// Initialize the connected components vector
+			for (uint32_t i = 0; i < vertex_count_; i++)
+			{
+				connected_components.at(i) = i;
+			}
+		}
+
+		// We could use just one edge info exchange per round
+
+		// While there are edges to process in the graph
+		while (countEdges() > 0)
+		{
+			vector<uint32_t> vertex_map(vertex_count_);
+
+			if (master())
+			{
+				initiateSampling(edgesToSamplePerProcessor(edgesAvailablePerProcessor()), vertex_map);
+
+				for (uint32_t i = 0; i < connected_components.size(); i++)
+				{
+					connected_components.at(i) = vertex_map.at(connected_components.at(i));
+				}
+			}
+			else
+			{
+				edgesAvailablePerProcessor();
+				acceptSamplingRequest();
+			}
+
+			receiveAndApplyMapping(vertex_map);
+		}
+
+		return vertex_count_;
+	}
+
+	// Load a slice of the graph edges: useful for parallel processing
+	void loadSlice(GraphInputIterator &input)
+	{
+		input.loadSlice(edges_slice_, rank_, group_size_);
+	}
+
+	// Count the number of edges in the whole graph
 	uint32_t countEdges()
 	{
 		uint32_t local_edges = edges_slice_.size(), edges;
+		// MPI_Allreduce is a collective operation that combines values from all processes in the communicator
 		MPI_Allreduce(&local_edges, &edges, 1, MPI_UINT32_T, MPI_SUM, communicator_);
+		// Returns the total number of edges in the graph
 		return edges;
 	}
 
@@ -90,89 +169,21 @@ private:
 		return edges_per_processor;
 	}
 
-	// Edges per rank, at root only
+	// Returns the number of edges available to each processor (only the master processor will have the vector edges_per_processor)
 	vector<int32_t> edgesAvailablePerProcessor()
 	{
+		// The size of the slice of the graph that each processor has
 		uint32_t available = (uint32_t)edges_slice_.size(); // MPI displacement types are rather unfortunate
+
+		// Only the master processor will have the vector edges_per_processor
 		vector<int32_t> edges_per_processor;
-
 		if (master())
-		{
 			edges_per_processor.resize(group_size_);
-		}
 
+		// MPI_Gather is a collective operation that gathers data from all processes in the communicator
 		MPI_Gather(&available, 1, MPI_UINT32_T, edges_per_processor.data(), 1, MPI_UINT32_T, 0, communicator_);
 
-		return edges_per_processor; // NRVO
-	}
-
-public:
-	SparseSampling(MPI_Comm communicator, uint32_t color, int32_t group_size, int32_t seed, int32_t target_size, uint32_t vertex_count, uint32_t edge_count) : communicator_(communicator), color_(color), group_size_(group_size), random_engine_(seed), target_size_(target_size), vertex_count_(vertex_count), initial_vertex_count_(vertex_count), initial_edge_count_(edge_count)
-	{
-		MPI_Comm_rank(communicator_, &rank_);
-		mpi_edge_t_ = MPIEdge::constructType();
-	}
-
-	~SparseSampling() {}
-
-	int32_t rank() const
-	{
-		return rank_;
-	}
-
-	bool master() const
-	{
-		return rank_ == 0;
-	}
-
-	// The root will receive the labels of the connected components in the vector
-	uint32_t connectedComponents(vector<uint32_t> &connected_components)
-	{
-		if (vertex_count_ != initial_vertex_count_)
-		{
-			throw logic_error("Cannot perform CC on a shrinked graph");
-		}
-
-		if (master())
-		{
-			connected_components.resize(vertex_count_);
-
-			for (uint32_t i = 0; i < vertex_count_; i++)
-			{
-				connected_components.at(i) = i;
-			}
-		}
-
-		// We could use just one edge info exchange per round
-		while (countEdges() > 0)
-		{
-			vector<uint32_t> vertex_map(vertex_count_);
-
-			if (master())
-			{
-				initiateSampling(edgesToSamplePerProcessor(edgesAvailablePerProcessor()), vertex_map);
-
-				for (uint32_t i = 0; i < connected_components.size(); i++)
-				{
-					connected_components.at(i) = vertex_map.at(connected_components.at(i));
-				}
-			}
-			else
-			{
-				edgesAvailablePerProcessor();
-				acceptSamplingRequest();
-			}
-
-			receiveAndApplyMapping(vertex_map);
-		}
-
-		return vertex_count_;
-	}
-
-	//Load a slice of the graph edges: useful for parallel processing
-	void loadSlice(GraphInputIterator &input)
-	{
-		input.loadSlice(edges_slice_, rank_, group_size_);
+		return edges_per_processor; // NRVO: Named Return Value Optimization (Compiler optimization)
 	}
 
 	vector<Edge> sample(uint32_t edge_count)

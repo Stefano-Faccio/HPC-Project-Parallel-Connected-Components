@@ -1,5 +1,8 @@
 #pragma once
 
+//Project headers
+#include "Edge.hpp"
+//Standard libraries
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -8,7 +11,7 @@
 #include <cassert>
 #include <vector>
 #include <cstdint>
-#include "Edge.hpp"
+
 
 using namespace std;
 

@@ -1,5 +1,5 @@
 CXX = mpiCC # g++
-CXXFLAGS = -std=c++11 -O2 -fopenmp
+CXXFLAGS = -std=c++11 -O2 -fopenmp -Wunused-variable -Wunused-function -Wunused-parameter
 #-Werror: every warning is treated as an error. -Wextra -Wall   -Wextra
 SRC = parallel_cc.cpp $(wildcard utils/*.cpp)   #serial_cc.cpp
 OBJ = $(SRC:.cpp=.o)
