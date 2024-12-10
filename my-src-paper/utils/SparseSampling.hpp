@@ -35,14 +35,14 @@ private:
 	}
 
 	// A vector whose entries correspond to the number of edges to sample at that processor
-	vector<uint32_t> edgesToSamplePerProcessor(vector<uint32_t> edges_available_per_processor)
+	vector<int32_t> edgesToSamplePerProcessor(vector<uint32_t> edges_available_per_processor)
 	{
 		uint32_t total_edges = (uint32_t)accumulate(edges_available_per_processor.begin(), edges_available_per_processor.end(), 0);
 		uint32_t number_of_edges_to_sample = min(uint32_t(pow((float)initial_vertex_count_, 1 + epsilon_ / 2) * (1 + delta_)), total_edges);
 		uint32_t sparsity_threshold = uint32_t(float(3) / (delta_ * delta_) * log(group_size_ / 0.9f));
 		uint32_t remaining_edges = number_of_edges_to_sample;
 
-		vector<uint32_t> edges_per_processor(group_size_, 0);
+		vector<int32_t> edges_per_processor(group_size_, 0);
 
 		// First look at processors with few edges
 		for (uint32_t i = 0; i < group_size_; i++)
@@ -188,7 +188,7 @@ public:
 		}
 	}
 
-	uint32_t initiateSampling(vector<uint32_t> edges_per_processor, vector<uint32_t> &vertex_map)
+	uint32_t initiateSampling(vector<int32_t> edges_per_processor, vector<uint32_t> &vertex_map)
 	{
 		uint32_t number_of_edges_to_sample = accumulate(edges_per_processor.begin(), edges_per_processor.end(), 0u);
 
@@ -209,7 +209,7 @@ public:
 		// Allocate space
 		vector<Edge> global_samples(number_of_edges_to_sample);
 		// Calculate displacement vector
-		vector<uint32_t> relative_displacements(edges_per_processor);
+		vector<int32_t> relative_displacements(edges_per_processor);
 		relative_displacements.insert(relative_displacements.begin(), 0); // Start at offset zero
 		relative_displacements.pop_back();								  // Last element not needed
 
