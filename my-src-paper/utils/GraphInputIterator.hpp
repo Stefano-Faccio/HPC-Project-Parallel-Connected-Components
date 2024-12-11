@@ -1,5 +1,8 @@
 #pragma once
 
+//Project headers
+#include "Edge.hpp"
+//Standard libraries
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -8,7 +11,7 @@
 #include <cassert>
 #include <vector>
 #include <cstdint>
-#include "Edge.hpp"
+
 
 using namespace std;
 
@@ -59,9 +62,8 @@ public:
 		open();
 	}
 
-	/*
-	//Load a slice of the graph edges: useful for parallel processing
-	void loadSlice(vector<Edge>& edges_slice, int rank, int group_size) {
+	void loadSlice(vector<Edge> &edges_slice, int32_t rank, int32_t group_size)
+	{
 		uint32_t slice_portion = edgeCount() / group_size;
 		uint32_t slice_from = slice_portion * rank;
 		// The last node takes any leftover edges
@@ -69,15 +71,17 @@ public:
 		uint32_t slice_to = last ? edgeCount() : slice_portion * (rank + 1);
 
 		GraphInputIterator::Iterator iterator = begin();
-		while (!iterator.end_) {
-			if (iterator.position() >= slice_from && iterator.position() < slice_to) {
+		while (!iterator.end_)
+		{
+			if (iterator.position() >= slice_from && iterator.position() < slice_to)
+			{
 				edges_slice.push_back(*iterator);
 			}
 			++iterator;
 		}
 
 		assert(edges_slice.size() == slice_to - slice_from);
-	}*/
+	}
 
 	// Model of http://en.cppreference.com/w/cpp/concept/InputIterator concept
 	class Iterator
