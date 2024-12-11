@@ -1,5 +1,6 @@
 CXX = mpiCC # g++ / clang #OMPI_CC=clang 
-CXXFLAGS = -std=c++11 -O2 -fopenmp -Wall -pedantic
+BOOST = -I./../boost_1_87_0/
+CXXFLAGS = -std=c++11 -O2 -fopenmp -Wall -pedantic $(BOOST) 
 #-Werror: every warning is treated as an error. -Wextra
 
 #FILENAME = serial_cc.cpp
