@@ -2,12 +2,13 @@ CXX = mpiCC # g++ / clang #OMPI_CC=clang
 CXXFLAGS = -std=c++11 -O2 -fopenmp -Wall -pedantic
 #-Werror: every warning is treated as an error. -Wextra
 
-FILENAME = parallel_cc.cpp #serial_cc.cpp
+#FILENAME = serial_cc.cpp
+FILENAME = parallel_cc.cpp
 SRC = $(FILENAME) $(wildcard utils/*.cpp)   
 OBJDIR = obj
 OBJ = $(patsubst %.cpp,$(OBJDIR)/%.o,$(SRC))
 #$(SRC:.cpp=.o)
-TARGET = connected_components.out
+TARGET = $(basename $(FILENAME)).out
 
 all: $(TARGET)
 

@@ -1,11 +1,11 @@
 #pragma once
 
 #include <mpi.h>
-//Project headers
+// Project headers
 #include "Edge.hpp"
 #include "GraphInputIterator.hpp"
 #include "DisjointSets.hpp"
-//Standard libraries
+// Standard libraries
 #include <iostream>
 #include <vector>
 #include <numeric>
@@ -23,7 +23,7 @@ private:
 	MPI_Comm communicator_;				// MPI communicator
 	MPI_Datatype mpi_edge_t_;			// MPI edge type (MPI_Datatype)
 	int32_t color_, group_size_, rank_; // color of the process, size of the group , Rank of the process
-	mt19937 random_engine_; // Mersenne Twister 19937 generator
+	mt19937 random_engine_;				// Mersenne Twister 19937 generator
 
 	// Graph related variables
 	uint32_t target_size_, vertex_count_, initial_vertex_count_, initial_edge_count_;
@@ -32,7 +32,7 @@ private:
 	// Other variables
 	const float epsilon_ = 0.09f;
 	const float delta_ = 0.2f;
-	
+
 public:
 	// Constructor
 	SparseSampling(MPI_Comm communicator, uint32_t color, int32_t group_size, int32_t seed, int32_t target_size, uint32_t vertex_count, uint32_t edge_count) : communicator_(communicator), color_(color), group_size_(group_size), random_engine_(seed), target_size_(target_size), vertex_count_(vertex_count), initial_vertex_count_(vertex_count), initial_edge_count_(edge_count)
@@ -71,10 +71,13 @@ public:
 
 		// We could use just one edge info exchange per round
 
-		// While there are edges to process in the graph
-		while (countEdges() > 0)
+		// While there are edges to process in the whole graph
+		while (countEdges() > 0) // Count the number of edges in the whole graph
 		{
-			vector<uint32_t> vertex_map(vertex_count_);
+			vector<uint32_t> vertex_map(vertex_count_); // Copy constructor: copy all elements from vertex_count_
+
+			// NOTE:
+			//  edgesAvailablePerProcessor() returns the number of edges available to each node: only the master node will have the vector edges_per_processor
 
 			if (master())
 			{
@@ -116,11 +119,12 @@ public:
 	// A vector whose entries correspond to the number of edges to sample at that processor
 	vector<int32_t> edgesToSamplePerProcessor(vector<int32_t> edges_available_per_processor)
 	{
+		// Calculate the total number of edges in the graph
 		uint32_t total_edges = (uint32_t)accumulate(edges_available_per_processor.begin(), edges_available_per_processor.end(), 0);
 		uint32_t number_of_edges_to_sample = min(uint32_t(pow((float)initial_vertex_count_, 1 + epsilon_ / 2) * (1 + delta_)), total_edges);
 		int32_t sparsity_threshold = int32_t(float(3) / (delta_ * delta_) * log(group_size_ / 0.9f));
 		uint32_t remaining_edges = number_of_edges_to_sample;
-
+		// Final vector of edges to sample per processor: output of the function
 		vector<int32_t> edges_per_processor(group_size_, 0);
 
 		// First look at processors with few edges
@@ -139,15 +143,14 @@ public:
 		// counter accumulating +-1 differences. This also ensures that empty slices will not be asked to sample anything.
 		for (int32_t i = 0; i < group_size_; i++)
 		{
-			if (edges_per_processor.at(i) != 0)
+			// Skip processors that have already been assigned their share
+			if (edges_per_processor.at(i) == 0)
 			{
-				continue; // Skip maxed-out processors
+				edges_per_processor.at(i) = min(
+					(int32_t)(double(number_of_edges_to_sample) * edges_available_per_processor.at(i) / total_edges),
+					edges_available_per_processor.at(i));
+				remaining_edges -= edges_per_processor.at(i);
 			}
-
-			edges_per_processor.at(i) = min(
-				(int32_t)(double(number_of_edges_to_sample) * edges_available_per_processor.at(i) / total_edges),
-				edges_available_per_processor.at(i));
-			remaining_edges -= edges_per_processor.at(i);
 		}
 
 		// We cannot give the remaining requests to just any processor, as we did previously. Distribute them among
