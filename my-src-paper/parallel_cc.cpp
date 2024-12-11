@@ -18,6 +18,7 @@ void debugPrint(const string &message, int32_t rank)
 
 int main(int argc, char *argv[])
 {
+	cout << "Start" << endl;
 	if (argc != 2)
 	{
 		cout << "Usage: connectivity INPUT_FILE" << endl;
