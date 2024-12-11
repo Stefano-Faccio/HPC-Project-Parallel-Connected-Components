@@ -1,7 +1,7 @@
 #Possible compiler: g++ / clang 
 #CXX = mpiCC 
 CXX = /apps/mpich-3.2/bin/mpicc
-BOOST_PATH = ../boost_1_87_0/
+BOOST_PATH = ../boost_1_86_0/
 CXXFLAGS = -std=c++11 -O2 -fopenmp -Wall -pedantic -I./$(BOOST_PATH) 
 #-Werror: every warning is treated as an error. -Wextra
 
