@@ -1,0 +1,12 @@
+    To submit a job: qsub <exec_script_with_our_job>
+– You get back a job_ID
+– Example: qsub test.sh
+– For instance we get “293409”
+
+    To monitor a job: qstat <job_ID>
+– You get back job status info
+– Example: qstat 293409
+
+    To cancel a job: qdel <job_ID>
+– Action job cancelled
+– Example: qdel 293409

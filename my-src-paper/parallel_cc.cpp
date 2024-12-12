@@ -18,7 +18,6 @@ void debugPrint(const string &message, int32_t rank)
 
 int main(int argc, char *argv[])
 {
-	cout << "Start" << endl;
 	if (argc != 2)
 	{
 		cout << "Usage: connectivity INPUT_FILE" << endl;
@@ -30,8 +29,8 @@ int main(int argc, char *argv[])
 	
 	// Get the rank and size in the original communicator: rank is the process ID, size is the number of processes
 	int32_t rank, group_size;
-	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	MPI_Comm_size(MPI_COMM_WORLD, &group_size);
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	debugPrint("1", rank);
 
 	// Read the number of vertices and edges from the input file

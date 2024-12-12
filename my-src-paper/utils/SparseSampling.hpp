@@ -258,7 +258,7 @@ public:
 		 * Incremental prefix scan
 		 */
 		vertex_map.resize(vertex_count_);
-		uint32_t resulting_vertex_count;
+		uint32_t resulting_vertex_count = 0;
 		prefixConnectedComponents(
 			global_samples,
 			vertex_map,

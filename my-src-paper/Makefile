@@ -2,7 +2,7 @@
 #CXX = mpiCC 
 CXX = /apps/mpich-3.2/bin/mpicxx
 BOOST_PATH = ../boost_1_86_0/
-CXXFLAGS = -std=c++11 -O2 -fopenmp -Wall -pedantic -I./$(BOOST_PATH) 
+CXXFLAGS = -std=c++11 -O2 -fopenmp -Wall -g -pedantic -I./$(BOOST_PATH) 
 #-Werror: every warning is treated as an error. -Wextra
 
 #FILENAME = serial_cc.cpp
