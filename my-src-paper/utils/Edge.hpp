@@ -4,12 +4,14 @@
 //Standard libraries
 #include <iostream>
 #include <cstdint>
+#include <cstddef>
 
 using namespace std;
 
 struct Edge
 {
-    uint32_t from, to;
+    uint32_t from;
+    uint32_t to;
 
     inline bool operator<(Edge const &other) const
     {
