@@ -3,4 +3,4 @@ obj/
 *.out
 *.o
 .vscode/
-input/soc-LiveJournal1.txt
+big*
