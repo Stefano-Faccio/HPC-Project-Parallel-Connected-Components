@@ -1,5 +1,5 @@
-CXX = /apps/mpich-3.2/bin/mpicxx #Compile on cluster
-#CXX = mpiCC #Compile on local machine
+#CXX = /apps/mpich-3.2/bin/mpicxx #Compile on cluster
+CXX = mpiCC #Compile on local machine
 
 BOOST_PATH = ../boost_1_83_0/
 #BOOST_PATH = ../boost_1_86_0/ #Having trouble with this version

@@ -17,4 +17,4 @@
 
 module load mpich-3.2
 # 20 because 2 nodes * 10 cores per node
-mpirun.actual -n 2 ./parallel_cc.out "input/medium1.txt" 
+mpirun.actual -n 2 ./parallel_cc.out "input/medium2.txt" 

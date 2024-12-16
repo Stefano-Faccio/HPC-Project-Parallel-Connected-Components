@@ -1,3 +1,4 @@
+#include <mpi.h>
 #include "utils/GraphInputIterator.hpp"
 #include "utils/DisjointSets.hpp"
 #include <unordered_map>
@@ -12,6 +13,9 @@ int main(int argc, char* argv[])
 		cout << "Usage: connectivity INPUT_FILE" << endl;
 		return 1;
 	}
+
+	//Start the timer
+	double start_time = MPI_Wtime();
 
 	//Open the file and read the number of vertices and edges
 	GraphInputIterator input(argv[1]);
@@ -43,5 +47,9 @@ int main(int argc, char* argv[])
 		}
 	}
 
+	double end_time = MPI_Wtime();
+	double elapsed_time = end_time - start_time;
+
 	cout << "Connected components: " << components.size() << endl;
+	cout << "Elapsed time: " << elapsed_time << " seconds" << endl;
 }
