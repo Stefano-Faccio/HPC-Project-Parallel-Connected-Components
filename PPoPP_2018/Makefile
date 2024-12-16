@@ -2,7 +2,6 @@
 CXX = mpiCC #Compile on local machine
 
 BOOST_PATH = ../boost_1_83_0/
-#BOOST_PATH = ../boost_1_86_0/ #Having trouble with this version
 CXXFLAGS = -std=c++11 -O2 -fopenmp -Wall -g -pedantic -I./$(BOOST_PATH) 
 
 #Serial version
