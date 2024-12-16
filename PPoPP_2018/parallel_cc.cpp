@@ -27,6 +27,9 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
+	// Start the timer
+	double start_time = MPI_Wtime();
+
 	// Initialize MPI
 	MPI_Init(&argc, &(argv));
 	
@@ -61,12 +64,16 @@ int main(int argc, char *argv[])
 	// Output the number of connected components if the process is the master
 	if (rank == 0)
 	{
+		double end_time = MPI_Wtime();
+		double elapsed_time = end_time - start_time;
+
 		cout << fixed;
 		cout << "File Name: " << argv[1] << endl;
 		cout << "Group Size: " << group_size << endl;
 		cout << "Number of vertices: " << input.vertexCount() << endl;
 		cout << "Number of edges: " << input.edgeCount() << endl;
 		cout << "Number of connected components: " << number_of_components << endl;
+		cout << "Elapsed time: " << elapsed_time << " seconds" << endl;
 	}
 	DEBUG_PRINT("7", rank);
 
