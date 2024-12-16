@@ -27,11 +27,11 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	// Start the timer
-	double start_time = MPI_Wtime();
-
 	// Initialize MPI
 	MPI_Init(&argc, &(argv));
+
+	// Start the timer
+	double start_time = MPI_Wtime();
 	
 	// Get the rank and size in the original communicator: rank is the process ID, size is the number of processes
 	int32_t group_size, rank;
