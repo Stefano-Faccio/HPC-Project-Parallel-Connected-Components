@@ -1,5 +1,5 @@
-#CXX = /apps/mpich-3.2/bin/mpicxx #Compile on cluster
-CXX = mpiCC #Compile on local machine
+CXX = /apps/mpich-3.2/bin/mpicxx #Compile on cluster
+#CXX = mpiCC #Compile on local machine
 
 BOOST_PATH = ../boost_1_83_0/
 CXXFLAGS = -std=c++11 -O2 -fopenmp -Wall -g -pedantic -I./$(BOOST_PATH) 
