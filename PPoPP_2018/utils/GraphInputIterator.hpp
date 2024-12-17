@@ -63,6 +63,7 @@ public:
 
 	void loadSlice(vector<Edge> &edges_slice, int32_t rank, int32_t group_size)
 	{
+		//edges_slice = vector<Edge>(1000);
 		uint32_t slice_portion = edgeCount() / group_size;
 		uint32_t slice_from = slice_portion * rank;
 		// The last node takes any leftover edges

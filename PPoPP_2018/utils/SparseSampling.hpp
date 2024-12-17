@@ -22,7 +22,7 @@ public:
 	// MPI related variables
 	MPI_Comm communicator_;				// MPI communicator
 	MPI_Datatype mpi_edge_t_;			// MPI edge type (MPI_Datatype)
-	int32_t color_, group_size_, rank_; // color of the process, size of the group , Rank of the process
+	int32_t group_size_, rank_; 		// size of the group , Rank of the process
 	mt19937 random_engine_;				// Mersenne Twister 19937 generator
 
 	// Graph related variables
@@ -34,7 +34,7 @@ public:
 	const float delta_ = 0.2f;
 	
 	// Constructor
-	SparseSampling(MPI_Comm communicator, uint32_t color, int32_t group_size, int32_t rank, int32_t seed, int32_t target_size, uint32_t vertex_count, uint32_t edge_count) : communicator_(communicator), color_(color), group_size_(group_size), rank_(rank), random_engine_(seed), target_size_(target_size), vertex_count_(vertex_count), initial_vertex_count_(vertex_count), initial_edge_count_(edge_count)
+	SparseSampling(MPI_Comm communicator, int32_t group_size, int32_t rank, int32_t seed, int32_t target_size, uint32_t vertex_count, uint32_t edge_count) : communicator_(communicator), group_size_(group_size), rank_(rank), random_engine_(seed), target_size_(target_size), vertex_count_(vertex_count), initial_vertex_count_(vertex_count), initial_edge_count_(edge_count)
 	{
 		// Construct the MPI edge type
 		mpi_edge_t_ = MPIEdge::constructType();

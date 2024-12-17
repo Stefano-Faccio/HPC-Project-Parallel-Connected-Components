@@ -45,7 +45,7 @@ int main(int argc, char *argv[])
 	DEBUG_PRINT("2", rank);
 
 	// Create a sampler object in which the graph will be loaded
-	SparseSampling sampler(MPI_COMM_WORLD, (int32_t)0, group_size, rank, seed + rank, (int32_t)1, input.vertexCount(), input.edgeCount());
+	SparseSampling sampler(MPI_COMM_WORLD, group_size, rank, seed + rank, (int32_t)1, input.vertexCount(), input.edgeCount());
 	DEBUG_PRINT("3", rank);
 
 	// Load the appropriate slice of the graph in every process
