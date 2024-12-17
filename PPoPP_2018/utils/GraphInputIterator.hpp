@@ -52,6 +52,7 @@ public:
 
 	uint32_t vertexCount() { return vertices_; }
 	uint32_t edgeCount() { return lines_; }
+	uint32_t readCount() { return read_; }
 
 	// Reset the file stream in order to read the input again
 	void reopen()
