@@ -3,10 +3,13 @@
 #include <cstdlib>
 #include <ctime>
 
+#include "../PPoPP_2018/utils/GraphInputIterator.hpp"
+#include "../PPoPP_2018/utils/Edge.hpp"
+
 using namespace std;
 
 int main() {
 
-    
+
     return 0;
 }

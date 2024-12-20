@@ -3,6 +3,7 @@
 #include <mpi.h>
 // Project headers
 #include "Edge.hpp"
+#include "MPIEdge.hpp"
 #include "GraphInputIterator.hpp"
 #include "DisjointSets.hpp"
 // Standard libraries
