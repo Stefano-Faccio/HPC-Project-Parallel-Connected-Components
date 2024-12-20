@@ -3,8 +3,8 @@
 #include <cstdlib>
 #include <ctime>
 
-#include "../PPoPP_2018/utils/GraphInputIterator.hpp"
 #include "../PPoPP_2018/utils/Edge.hpp"
+#include "../PPoPP_2018/utils/GraphInputIterator.hpp"
 
 using namespace std;
 
