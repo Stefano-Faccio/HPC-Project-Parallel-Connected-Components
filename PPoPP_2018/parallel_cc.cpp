@@ -29,37 +29,31 @@ int main(int argc, char *argv[])
 
 	// Initialize MPI
 	MPI_Init(&argc, &(argv));
-
-	// Start the timer
-	double start_time = MPI_Wtime();
 	
 	// Get the rank and size in the original communicator: rank is the process ID, size is the number of processes
 	int32_t group_size, rank;
 	MPI_Comm_size(MPI_COMM_WORLD, &group_size);
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-	
-	DEBUG_PRINT("1", rank);
 
 	// Read the number of vertices and edges from the input file
 	GraphInputIterator input(argv[1]);
-	DEBUG_PRINT("2", rank);
 
 	// Create a sampler object in which the graph will be loaded
 	SparseSampling sampler(MPI_COMM_WORLD, group_size, rank, seed + rank, (int32_t)1, input.vertexCount(), input.edgeCount());
-	DEBUG_PRINT("3", rank);
 
 	// Load the appropriate slice of the graph in every process
 	sampler.loadSlice(input);
-	DEBUG_PRINT("4", rank);
 
 	// Wait for all processes to finish loading the graph
+	//Blocks the caller until all processes in the communicator have called it
 	MPI_Barrier(MPI_COMM_WORLD);
-	DEBUG_PRINT("5", rank);
+
+	// Start the timer
+	double start_time = MPI_Wtime();
 
 	// Compute the connected components
 	vector<uint32_t> components;
 	int number_of_components = sampler.connectedComponents(components);
-	DEBUG_PRINT("6", rank);
 
 	// Output the number of connected components if the process is the master
 	if (rank == 0)
@@ -75,7 +69,6 @@ int main(int argc, char *argv[])
 		cout << "Number of connected components: " << number_of_components << endl;
 		cout << "Elapsed time: " << elapsed_time << " seconds" << endl;
 	}
-	DEBUG_PRINT("7", rank);
 
 	// Close MPI
 	MPI_Finalize();

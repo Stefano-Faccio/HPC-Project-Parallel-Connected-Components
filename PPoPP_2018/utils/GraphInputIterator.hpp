@@ -63,19 +63,29 @@ public:
 
 	void loadSlice(vector<Edge> &edges_slice, int32_t rank, int32_t group_size)
 	{
-		//edges_slice = vector<Edge>(1000);
+		//slice_portion: The number of edges in each slice
 		uint32_t slice_portion = edgeCount() / group_size;
+		//slice_from: The starting edge of the slice
 		uint32_t slice_from = slice_portion * rank;
 		// The last node takes any leftover edges
 		bool last = rank == group_size - 1;
 		uint32_t slice_to = last ? edgeCount() : slice_portion * (rank + 1);
+		//Preallocate the vector
+		edges_slice.reserve(slice_to - slice_from);
 
 		GraphInputIterator::Iterator iterator = begin();
 		while (!iterator.end_)
 		{
-			if (iterator.position() >= slice_from && iterator.position() < slice_to)
+			if (iterator.position() >= slice_from)
 			{
-				edges_slice.push_back(*iterator);
+				if (iterator.position() < slice_to)
+				{
+					edges_slice.push_back(*iterator);
+				}
+				else
+				{
+					break;
+				}
 			}
 			++iterator;
 		}

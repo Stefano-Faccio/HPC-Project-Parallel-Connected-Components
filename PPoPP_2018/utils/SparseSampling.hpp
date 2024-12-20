@@ -51,21 +51,14 @@ public:
 	// The root will receive the labels of the connected components in the vector
 	uint32_t connectedComponents(vector<uint32_t> &connected_components)
 	{
-		if (vertex_count_ != initial_vertex_count_)
-		{
-			throw logic_error("Cannot perform CC on a shrinked graph");
-		}
-
 		if (master())
 		{
-			// Reset the connected components vector
+			// Reset the connected components vector to the size of the vertex count
 			connected_components.resize(vertex_count_);
 
 			// Initialize the connected components vector
 			for (uint32_t i = 0; i < vertex_count_; i++)
-			{
 				connected_components.at(i) = i;
-			}
 		}
 
 		// We could use just one edge info exchange per round
@@ -73,7 +66,8 @@ public:
 		// While there are edges to process in the whole graph
 		while (countEdges() > 0) // Count the number of edges in the whole graph
 		{
-			vector<uint32_t> vertex_map(vertex_count_); // Copy constructor: copy all elements from vertex_count_
+			// Initialize the vertex map with vertex_count_ elements
+			vector<uint32_t> vertex_map(vertex_count_); 
 
 			// NOTE:
 			//  edgesAvailablePerProcessor() returns the number of edges available to each node: only the master node will have the vector edges_per_processor
@@ -83,9 +77,7 @@ public:
 				initiateSampling(edgesToSamplePerProcessor(edgesAvailablePerProcessor()), vertex_map);
 
 				for (uint32_t i = 0; i < connected_components.size(); i++)
-				{
 					connected_components.at(i) = vertex_map.at(connected_components.at(i));
-				}
 			}
 			else
 			{
@@ -109,19 +101,22 @@ public:
 	uint32_t countEdges()
 	{
 		uint32_t local_edges = edges_slice_.size(), edges;
-		// MPI_Allreduce is a collective operation that combines values from all processes in the communicator
+		// MPI_Allreduce combines values from all processes and distributes the result back to all processes 
 		MPI_Allreduce(&local_edges, &edges, 1, MPI_UINT32_T, MPI_SUM, communicator_);
 		// Returns the total number of edges in the graph
 		return edges;
 	}
 
-	// A vector whose entries correspond to the number of edges to sample at that processor
+	// Return a vector of the number of edges that every processor should have after sampling
 	vector<int32_t> edgesToSamplePerProcessor(vector<int32_t> edges_available_per_processor)
 	{
-		// Calculate the total number of edges in the graph
+		// Sum of the number of edges available to each processor to get the total number of edges in the graph
 		uint32_t total_edges = (uint32_t)accumulate(edges_available_per_processor.begin(), edges_available_per_processor.end(), 0);
+
 		uint32_t number_of_edges_to_sample = min(uint32_t(pow((float)initial_vertex_count_, 1 + epsilon_ / 2) * (1 + delta_)), total_edges);
+
 		int32_t sparsity_threshold = int32_t(float(3) / (delta_ * delta_) * log(group_size_ / 0.9f));
+
 		uint32_t remaining_edges = number_of_edges_to_sample;
 		// Final vector of edges to sample per processor: output of the function
 		vector<int32_t> edges_per_processor(group_size_, 0);
@@ -173,14 +168,14 @@ public:
 	vector<int32_t> edgesAvailablePerProcessor()
 	{
 		// The size of the slice of the graph that each processor has
-		uint32_t available = (uint32_t)edges_slice_.size(); // MPI displacement types are rather unfortunate
+		uint32_t available = (uint32_t)edges_slice_.size();
 
 		// Only the master processor will have the vector edges_per_processor
 		vector<int32_t> edges_per_processor;
 		if (master())
 			edges_per_processor.resize(group_size_);
 
-		// MPI_Gather is a collective operation that gathers data from all processes in the communicator
+		// MPI_Gather gets data from all processes to the root process
 		MPI_Gather(&available, 1, MPI_UINT32_T, edges_per_processor.data(), 1, MPI_UINT32_T, 0, communicator_);
 
 		return edges_per_processor; // NRVO: Named Return Value Optimization (Compiler optimization)
@@ -191,12 +186,15 @@ public:
 		vector<Edge> edges;
 		uint32_t size = edges_slice_.size();
 
+		// If the number of edges to sample is equal to the number of edges that the processor has, return the whole slice
 		if (edge_count == edges_slice_.size())
 		{
 			return edges_slice_;
 		}
 		else
 		{
+			// Randomly sample edge_count edges from the slice
+			// BUT 
 			for (uint32_t i = 0; i < edge_count; i++)
 			{
 				edges.push_back(edges_slice_.at(random_engine_() % size));
@@ -210,31 +208,35 @@ public:
 	{
 		uint32_t number_of_edges_to_sample = accumulate(edges_per_processor.begin(), edges_per_processor.end(), 0u);
 
-		/**
-		 * Scatter sampling requests
-		 */
+		//Count of edges to sample for each processor
 		uint32_t edges_to_sample_locally;
+		//MPI_Scatter sends data from one process to all other processes in a communicator 
 		MPI_Scatter(edges_per_processor.data(), 1, MPI_INT, &edges_to_sample_locally, 1, MPI_INT, 0, communicator_);
 
-		/**
-		 * Take part in sampling
-		 */
+		//Take part in sampling
 		vector<Edge> samples = sample(edges_to_sample_locally);
 
-		/**
-		 * Gather samples
-		 */
+		// Gather samples
 		// Allocate space
 		vector<Edge> global_samples(number_of_edges_to_sample);
 		// Calculate displacement vector
-		vector<int32_t> relative_displacements(edges_per_processor);
+		vector<int32_t> relative_displacements(edges_per_processor); // Copy
+		// Add a zero at the beginning and remove the last element
 		relative_displacements.insert(relative_displacements.begin(), 0); // Start at offset zero
 		relative_displacements.pop_back();								  // Last element not needed
 
 		vector<int32_t> displacements;
 		partial_sum(relative_displacements.begin(), relative_displacements.end(), back_inserter(displacements));
+		/*
+		Explanation of partial_sum:
+		int val[] = {1,2,3,4,5};
+		vector<int> result;
+		partial_sum(val, val + 5, result);
+		result now contains: 1 3 6 10 15
+		*/
 
-		assert(master());
+		// Gather the samples
+		// MPI_Gatherv Gathers together values from a group of processes. The values can have different lengths
 		MPI_Gatherv(
 			samples.data(),
 			edges_to_sample_locally,
@@ -248,24 +250,18 @@ public:
 
 		assert(global_samples.size() == number_of_edges_to_sample);
 
-		/**
-		 * Shuffle to ensure random order for the prefix
-		 */
+		//Shuffle to ensure random order for the prefix
 		shuffle(global_samples.begin(), global_samples.end(), random_engine_);
 
 		/**
 		 * Incremental prefix scan
 		 */
-		vertex_map.resize(vertex_count_);
+		vertex_map.resize(vertex_count_); // Resize the vertex_map to the size of the vertex count not needed but okay
 		uint32_t resulting_vertex_count = 0;
-		prefixConnectedComponents(
-			global_samples,
-			vertex_map,
-			target_size_,
-			resulting_vertex_count);
+		prefixConnectedComponents(global_samples, vertex_map, target_size_, resulting_vertex_count);
 
 		vertex_count_ = resulting_vertex_count;
-		// Yay we are done
+
 		return resulting_vertex_count;
 	}
 
@@ -274,39 +270,27 @@ public:
 	 * @param [out] vertices_map preallocated map of {vertex_count >= 0} vertices. Will be filled with partitions label from [0, vertex_count)
 	 * @param components_count the desired number of connected components
 	 * @param [out] resulting_vertex_count how many vertices remain
-	 * @param true if the described prefix exists
-	 * I don't trust this code, it has just been copied over -- My past self has written it
 	 */
-	bool prefixConnectedComponents(const vector<Edge> &edges,
-								   vector<uint32_t> &vertex_map,
-								   uint32_t components_count,
-								   uint32_t &resulting_vertex_count)
+	void prefixConnectedComponents(const vector<Edge> &edges, vector<uint32_t> &vertex_map, uint32_t components_count, uint32_t &resulting_vertex_count)
 	{
+		// Create a disjoint set for the vertices
 		DisjointSets<uint32_t> dsets(vertex_map.size());
 
 		if (components_count == 0 || vertex_map.size() == 0)
 		{
-			return true;
+			return;
 		}
 
 		uint32_t components_active = vertex_map.size();
-		bool found = false;
 
-		uint32_t i = 0;
-		for (; i < edges.size() && components_active > components_count; i++)
+		for (uint32_t i = 0; i < edges.size() && components_active > components_count; i++)
 		{
-			uint32_t v1_set = dsets.find(edges.at(i).from),
-					 v2_set = dsets.find(edges.at(i).to);
+			uint32_t v1_set = dsets.find(edges.at(i).from), v2_set = dsets.find(edges.at(i).to);
 			if (v1_set != v2_set)
 			{
 				components_active--;
 				dsets.unify(v1_set, v2_set);
 			}
-		}
-
-		if (components_active == components_count)
-		{
-			found = true;
 		}
 
 		// Also relabel the components to be in [0, new_vertex_count)!
@@ -324,7 +308,7 @@ public:
 		}
 
 		resulting_vertex_count = components_active;
-		return found;
+		return ;
 	}
 
 	/**
@@ -334,9 +318,11 @@ public:
 	 */
 	void receiveAndApplyMapping(vector<uint32_t> &vertex_map)
 	{
+		// MPI_Bcast Broadcasts a message from the process with rank "root" to all other processes of the communicator 
 		MPI_Bcast(vertex_map.data(), vertex_map.size(), MPI_UINT32_T, 0, communicator_);
 
 		applyMapping(vertex_map);
+
 		MPI_Bcast(&vertex_count_, 1, MPI_UINT32_T, 0, communicator_);
 	}
 
@@ -382,11 +368,4 @@ public:
 
 		edges_slice_.swap(updated_edges);
 	}
-
-	/**
-	 * Sample `edge_count` edges locally, prop. to their weight
-	 * @param edge_count
-	 * @return The edge sample
-	 */
-	// virtual vector<Edge> sample(uint32_t edge_count) = 0;
 };
