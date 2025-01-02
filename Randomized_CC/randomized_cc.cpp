@@ -10,53 +10,21 @@
 #include <cassert>
 #include <algorithm>
 #include <unordered_set>
+#include <atomic>
 //Custom libraries
 #include "../PPoPP_2018/utils/Edge.hpp"
 #include "../PPoPP_2018/utils/GraphInputIterator.hpp"
 
 using namespace std;
 
-//#define DEBUG
+void coin_toss_and_child_hook(uint32_t nNodes, vector<Edge>& edges, vector<atomic<uint32_t>>& labels);
 
 // Random number generator
 static uint32_t seed;
 #pragma omp threadprivate(seed)
 
-void coin_toss_and_child_hook(uint32_t nNodes, vector<Edge>& edges, vector<uint32_t>& labels) {
 
-	// Hook child to a parent based on the coin toss		
-	vector<bool> coin_toss(nNodes);
-
-	#pragma omp parallel shared(nNodes, edges, labels, coin_toss) 
-	{	
-		// Generate random coin tosses
-		#pragma omp for
-		for (uint32_t i = 0; i < nNodes; i++) {
-			coin_toss[i] = rand_r(&seed) % 2;
-		}
-
-		// Hook child to a parent based on the coin toss
-		//for(auto it = edges.begin(); it < edges.end(); it++)
-		#pragma omp for
-		for(uint32_t i = 0; i < edges.size(); i++)
-		{
-			// Tail is True and Head is False
-			if(coin_toss[edges[i].from] && !coin_toss[edges[i].to])
-			{
-				// Note: race condition here
-				#pragma omp critical (hook_child)
-				labels[edges[i].from] = labels[edges[i].to];
-			}
-			else if(!coin_toss[edges[i].from] && coin_toss[edges[i].to])
-			{
-				#pragma omp critical (hook_child)
-				labels[edges[i].to] = labels[edges[i].from];
-			}
-		}
-	}
-}
-
-vector<Edge> find_rank_and_remove_edges(uint32_t nNodes, vector<Edge>& edges, vector<uint32_t>& labels)
+vector<Edge> find_rank_and_remove_edges(uint32_t nNodes, vector<Edge>& edges, vector<atomic<uint32_t>>& labels)
 {
 	vector<uint32_t> s(edges.size(), 0), S(edges.size());
 	// Vector to store the next edges for the recursive call
@@ -70,8 +38,6 @@ vector<Edge> find_rank_and_remove_edges(uint32_t nNodes, vector<Edge>& edges, ve
 		{
 			if(labels[edges[i].from] != labels[edges[i].to])
 				s[i] = 1;
-			else
-				s[i] = 0;
 		}
 
 		// Prefix sum TODO: parallelize
@@ -96,22 +62,15 @@ vector<Edge> find_rank_and_remove_edges(uint32_t nNodes, vector<Edge>& edges, ve
 		for(uint32_t i = 0; i < edges.size(); i++)
 		{
 			if(labels[edges[i].from] != labels[edges[i].to])
-			{
-				int index = S[i] - 1;
-				Edge edge = {labels[edges[i].from], labels[edges[i].to]};
-
-				#pragma omp critical (copy_edge)
-				{
-					nextEdges[index] = edge;
-				}
-			}				
+				nextEdges[S[i] - 1] = {labels[edges[i].from], labels[edges[i].to]};				
 		}
+
 	}
 
 	return nextEdges;
 }
 
-void par_randomized_cc(uint32_t nNodes, vector<Edge>& edges, vector<uint32_t>& labels, int* iteration) {
+void par_randomized_cc(uint32_t nNodes, vector<Edge>& edges, vector<atomic<uint32_t>>& labels, int* iteration) {
 
 	// Increment the iteration
 	(*iteration)++;
@@ -125,21 +84,10 @@ void par_randomized_cc(uint32_t nNodes, vector<Edge>& edges, vector<uint32_t>& l
 	// Coin toss and child hook
 	coin_toss_and_child_hook(nNodes, edges, labels);
 
+	vector<uint32_t> s(edges.size(), 4), S(edges.size());
+
 	// Find the rank 
 	vector<Edge> nextEdges = find_rank_and_remove_edges(nNodes, edges, labels);
-
-	#ifdef DEBUG
-	//Print the labels
-	cout << "Labels at iteration " << *iteration << ": " << endl;
-	for (uint32_t i = 0; i < nNodes; i++) {
-		cout << i << " ";
-	}
-	cout << endl;
-	for (uint32_t i = 0; i < nNodes; i++) {
-		cout << labels[i] << " ";
-	}
-	cout << endl << endl;
-	#endif
 
 	// Recursively call the function
 	par_randomized_cc(nNodes, nextEdges, labels, iteration);
@@ -149,22 +97,39 @@ void par_randomized_cc(uint32_t nNodes, vector<Edge>& edges, vector<uint32_t>& l
 	for(uint32_t i = 0; i < edges.size(); i++)
 	{
 		if(edges[i].to == labels[edges[i].from])
-		{
-			#pragma omp critical
-			{
-				labels[edges[i].from] = labels[edges[i].to];
-			}
-		}
+			labels[edges[i].from].store(labels[edges[i].to]);
 		else if(edges[i].from == labels[edges[i].to])
-		{
-			#pragma omp critical
-			{
-				labels[edges[i].to] = labels[edges[i].from];
-			}
-		}
+			labels[edges[i].to].store(labels[edges[i].from]);
 	}
 
 	return;
+}
+
+// Coin toss and child hook - OK
+void coin_toss_and_child_hook(uint32_t nNodes, vector<Edge>& edges, vector<atomic<uint32_t>>& labels) {
+
+	// Hook child to a parent based on the coin toss		
+	vector<bool> coin_toss(nNodes);
+
+	#pragma omp parallel shared(nNodes, edges, labels, coin_toss) 
+	{	
+		// Generate random coin tosses
+		#pragma omp for
+		for (uint32_t i = 0; i < nNodes; i++) {
+			coin_toss[i] = rand_r(&seed) % 2;
+		}
+
+		// Hook child to a parent based on the coin toss
+		#pragma omp for
+		for(uint32_t i = 0; i < edges.size(); i++)
+		{
+			// Tail is True and Head is False
+			if(coin_toss[edges[i].from] && !coin_toss[edges[i].to])
+				labels[edges[i].from].store(labels[edges[i].to]);
+			else if(!coin_toss[edges[i].from] && coin_toss[edges[i].to])
+				labels[edges[i].to].store(labels[edges[i].from]);
+		}
+	}
 }
 
 int main(int argc, char* argv[]) {
@@ -203,7 +168,7 @@ int main(int argc, char* argv[]) {
 		cout << "Warning: " << input.edgeCount() - real_edge_count << " self loops were removed" << endl;
 	}
 
-	vector<uint32_t> labels(input.vertexCount());
+	vector<atomic<uint32_t>> labels(input.vertexCount());
 	for(uint32_t i = 0; i < input.vertexCount(); i++) {
 		labels[i] = i;
 	}
