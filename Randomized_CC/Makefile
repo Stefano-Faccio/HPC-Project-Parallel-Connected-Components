@@ -5,6 +5,7 @@ CXXFLAGS = -std=c++11 -O2 -fopenmp -Wall -g -pedantic -I./$(BOOST_PATH)
 
 #Serial version
 FILENAME_SERIAL = randomized_cc.cpp
+#FILENAME_SERIAL = test.cpp
 SRC_SERIAL = $(FILENAME_SERIAL) 
 TARGET_SERIAL = $(basename $(FILENAME_SERIAL)).out
 
