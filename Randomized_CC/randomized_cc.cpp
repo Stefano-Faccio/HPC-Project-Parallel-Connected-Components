@@ -135,6 +135,11 @@ vector<Edge> find_rank_and_remove_edges(uint32_t nNodes, const vector<Edge>& edg
 				s[i] = 1;
 		}
 
+		
+		// if __GNUC__ >= 10, use the new omp scan directive
+		// Otherwise, use the old way to do a prefix sum
+
+		#if __GNUC__ >= 10
 		// Prefix sum with parallel for
 		#pragma omp for reduction(inscan, + : temp)
         for (uint32_t i = 0; i < edges.size(); i++) {
@@ -143,8 +148,7 @@ vector<Edge> find_rank_and_remove_edges(uint32_t nNodes, const vector<Edge>& edg
             #pragma omp scan inclusive(temp)
             S[i] = temp;
         }
-
-		/*
+		#else
 		// Prefix sum sequential
 		#pragma omp single
 		{
@@ -155,7 +159,7 @@ vector<Edge> find_rank_and_remove_edges(uint32_t nNodes, const vector<Edge>& edg
 				S[i] = s[i] + S[i - 1];
 			}
 		}
-		*/
+		#endif
 
 		// Allocate memory for the nextEdges vector 
 		// Deallocate memory from the previous used vector
@@ -201,8 +205,7 @@ void map_results_back(uint32_t nNodes, const vector<Edge>& edges, const vector<a
 
 }
 
-int main(int argc, char* argv[]) {
-	
+int main(int argc, char* argv[]) {	
 	// Configure the RNG: seed is private to each thread and persistent across calls
     #pragma omp parallel
     {
