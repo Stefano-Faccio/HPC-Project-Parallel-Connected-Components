@@ -48,7 +48,7 @@ vector<atomic<uint32_t>>& par_randomized_cc(uint32_t nNodes, const vector<Edge>&
 		return labels;
 		
 	// Coin toss and child hook
-	vector<bool> coss_toin = coin_toss_and_child_hook(nNodes, edges, labels);
+	coin_toss_and_child_hook(nNodes, edges, labels);
 
 	// Find the rank 
 	vector<Edge> nextEdges = find_rank_and_remove_edges(nNodes, edges, labels);
@@ -56,10 +56,10 @@ vector<atomic<uint32_t>>& par_randomized_cc(uint32_t nNodes, const vector<Edge>&
 	if(nextEdges.size() == edges.size())
 	{
 		//Print edges
-		cout << "Edges: " << endl;
+		cout << "Error (same edges as last iterarion): ";
 		for(uint32_t i = 0; i < edges.size(); i++)
 		{
-			cout << "(" << edges[i].from << "-" << coss_toin[edges[i].from] << "," << edges[i].to << "-" << coss_toin[edges[i].to] << ") ";
+			cout << "[" << edges[i].from << "," << edges[i].to << "-(" << coss_toin[edges[i].from] << "," << coss_toin[edges[i].to] << ")] ";
 		}
 		cout << endl;
 	}
@@ -77,7 +77,7 @@ vector<atomic<uint32_t>>& par_randomized_cc(uint32_t nNodes, const vector<Edge>&
 }
 
 // Coin toss and child hook - OK
-vector<bool> coin_toss_and_child_hook(uint32_t nNodes, const vector<Edge>& edges, vector<atomic<uint32_t>>& labels) 
+void coin_toss_and_child_hook(uint32_t nNodes, const vector<Edge>& edges, vector<atomic<uint32_t>>& labels) 
 {
 	// Hook child to a parent based on the coin toss		
 	vector<bool> coin_toss(nNodes);
@@ -109,15 +109,17 @@ vector<bool> coin_toss_and_child_hook(uint32_t nNodes, const vector<Edge>& edges
 		}
 	}
 
-	return coin_toss;
+	return;
 }
 
 vector<Edge> find_rank_and_remove_edges(uint32_t nNodes, const vector<Edge>& edges, vector<atomic<uint32_t>>& labels)
 {
 	// This vectors will be deallocated when the function ends
-	vector<uint32_t> s(edges.size(), 0), S(edges.size());
+	vector<uint32_t> s(edges.size(), 0), S(edges.size(), 0);
 	// Vector to store the next edges for the recursive call
 	vector<Edge> nextEdges;
+	// Temporary variable for the prefix sum
+	uint32_t temp = 0;
 
 	#pragma omp parallel shared(nNodes, edges, labels, s, S, nextEdges) 
 	{
@@ -133,7 +135,17 @@ vector<Edge> find_rank_and_remove_edges(uint32_t nNodes, const vector<Edge>& edg
 				s[i] = 1;
 		}
 
-		// Prefix sum TODO: parallelize
+		// Prefix sum with parallel for
+		#pragma omp for reduction(inscan, + : temp)
+        for (uint32_t i = 0; i < edges.size(); i++) {
+            
+            temp += s[i]; 
+            #pragma omp scan inclusive(temp)
+            S[i] = temp;
+        }
+
+		/*
+		// Prefix sum sequential
 		#pragma omp single
 		{
 			// Prefix sum
@@ -143,6 +155,7 @@ vector<Edge> find_rank_and_remove_edges(uint32_t nNodes, const vector<Edge>& edg
 				S[i] = s[i] + S[i - 1];
 			}
 		}
+		*/
 
 		// Allocate memory for the nextEdges vector 
 		// Deallocate memory from the previous used vector
