@@ -24,7 +24,7 @@ using namespace std;
 // Test with different compilers and check if the results are the same
 #define TEST_RANDOM_GEN false
 
-vector<bool> coin_toss_and_child_hook(uint32_t nNodes, const vector<Edge>& edges, vector<atomic<uint32_t>>& labels);
+void coin_toss_and_child_hook(uint32_t nNodes, const vector<Edge>& edges, vector<atomic<uint32_t>>& labels);
 vector<Edge> find_rank_and_remove_edges(uint32_t nNodes, const vector<Edge>& edges, vector<atomic<uint32_t>>& labels);
 void map_results_back(uint32_t nNodes, const vector<Edge>& edges, const vector<atomic<uint32_t>>& labels, vector<atomic<uint32_t>>& map);
 
@@ -59,7 +59,7 @@ vector<atomic<uint32_t>>& par_randomized_cc(uint32_t nNodes, const vector<Edge>&
 		cout << "Error (same edges as last iterarion): ";
 		for(uint32_t i = 0; i < edges.size(); i++)
 		{
-			cout << "[" << edges[i].from << "," << edges[i].to << "-(" << coss_toin[edges[i].from] << "," << coss_toin[edges[i].to] << ")] ";
+			cout << "[" << edges[i].from << "," << edges[i].to << "] ";
 		}
 		cout << endl;
 	}
