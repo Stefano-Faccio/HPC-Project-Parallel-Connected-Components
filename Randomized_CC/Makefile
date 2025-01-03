@@ -1,6 +1,6 @@
-CXX = g++-14
-# Compiler for HPC
 #CXX = g++-14
+# Compiler for HPC
+CXX = /apps/gcc-9.1.0/local/bin/g++-9.1.0
 
 BOOST_PATH = ../boost_1_83_0/
 CXXFLAGS = -std=c++11 -O2 -fopenmp -Wall -g -pedantic -I./$(BOOST_PATH) 
