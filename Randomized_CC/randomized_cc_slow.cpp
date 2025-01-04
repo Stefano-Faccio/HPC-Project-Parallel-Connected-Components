@@ -18,9 +18,9 @@
 using namespace std;
 
 void configure_RNG();
-void coin_toss_and_child_hook(uint32_t nNodes, const vector<Edge>& edges, vector<uint32_t>& labels);
-vector<Edge> find_rank_and_remove_edges(uint32_t nNodes, const vector<Edge>& edges, vector<uint32_t>& labels);
-void map_results_back(uint32_t nNodes, const vector<Edge>& edges, const vector<uint32_t>& labels, vector<uint32_t>& map);
+void coin_toss_and_child_hook(uint32_t nNodes, const vector<Edge>& edges, vector<atomic<uint32_t>>& labels);
+vector<Edge> find_rank_and_remove_edges(uint32_t nNodes, const vector<Edge>& edges, vector<atomic<uint32_t>>& labels);
+void map_results_back(uint32_t nNodes, const vector<Edge>& edges, const vector<atomic<uint32_t>>& labels, vector<atomic<uint32_t>>& map);
 
 // Random number generator
 // Note: omp threadprivate does not work with mt19937, for some unknown reason
@@ -30,7 +30,7 @@ void map_results_back(uint32_t nNodes, const vector<Edge>& edges, const vector<u
 // However, the behavior with openmp is not defined, and it is compiler dependent. With GCC it works as expected.
 thread_local mt19937 random_genator;
 
-vector<uint32_t>& par_randomized_cc(uint32_t nNodes, const vector<Edge>& edges, vector<uint32_t>& labels, int* iteration) {
+vector<atomic<uint32_t>>& par_randomized_cc(uint32_t nNodes, const vector<Edge>& edges, vector<atomic<uint32_t>>& labels, int* iteration) {
 
 	// Increment the iteration
 	(*iteration)++;
@@ -57,7 +57,7 @@ vector<uint32_t>& par_randomized_cc(uint32_t nNodes, const vector<Edge>& edges, 
 	}
 
 	// Recursively call the function
-	vector<uint32_t>& map = par_randomized_cc(nNodes, nextEdges, labels, iteration);
+	vector<atomic<uint32_t>>& map = par_randomized_cc(nNodes, nextEdges, labels, iteration);
 
 	// Free nextEdges memory
 	vector<Edge>().swap(nextEdges); 
@@ -68,7 +68,7 @@ vector<uint32_t>& par_randomized_cc(uint32_t nNodes, const vector<Edge>& edges, 
 	return map;
 }
 
-void coin_toss_and_child_hook(uint32_t nNodes, const vector<Edge>& edges, vector<uint32_t>& labels) 
+void coin_toss_and_child_hook(uint32_t nNodes, const vector<Edge>& edges, vector<atomic<uint32_t>>& labels) 
 {
 	// Hook child to a parent based on the coin toss		
 	vector<bool> coin_toss(nNodes);
@@ -78,7 +78,7 @@ void coin_toss_and_child_hook(uint32_t nNodes, const vector<Edge>& edges, vector
 		// Generate random coin tosses
 		#pragma omp for
 		for (uint32_t i = 0; i < nNodes; i++) {
-			// Not a race condition because each thread writes to a different index and has a different RNG
+			// Not a race condition because each thread writes to a different index
 			coin_toss[i] = random_genator() % 2; // Tail is True and Head is False
 		}
 
@@ -88,35 +88,29 @@ void coin_toss_and_child_hook(uint32_t nNodes, const vector<Edge>& edges, vector
 		{
 			uint32_t from = edges[i].from;
 			uint32_t to = edges[i].to;
-
-			// Race condition ONLY labels that has coin_toss TRUE (labels that has coin_toss FALSE are read only)
-			// So atomic writes is sufficient 
+			// Race condition on labels[edges[i].from] and labels[edges[i].to]
+			// I'm using atomic variables to avoid it
+			// Other option is to use a critical section or omp atomic if possible
 			if(coin_toss[from] && !coin_toss[to])
-			{
-				#pragma omp atomic write
-				labels[from] = labels[to];
-			}
+				labels[from].store(labels[to].load());
 			else if(!coin_toss[from] && coin_toss[to])
-			{
-				#pragma omp atomic write
-				labels[to] = labels[from];
-			}
+				labels[to].store(labels[from].load());
 		}
 	}
 
 	return;
 }
 
-vector<Edge> find_rank_and_remove_edges(uint32_t nNodes, const vector<Edge>& edges, vector<uint32_t>& labels)
+vector<Edge> find_rank_and_remove_edges(uint32_t nNodes, const vector<Edge>& edges, vector<atomic<uint32_t>>& labels)
 {
 	// This vectors will be deallocated when the function ends
-	vector<uint32_t> edges_mark(edges.size(), 0), prefix_sum(edges.size(), 0);
+	vector<uint32_t> s(edges.size(), 0), S(edges.size(), 0);
 	// Vector to store the next edges for the recursive call
 	vector<Edge> nextEdges;
 	// Temporary variable for the prefix sum
-	uint32_t prefix_sum_temp = 0;
+	uint32_t temp = 0;
 
-	#pragma omp parallel shared(nNodes, edges, labels, edges_mark, prefix_sum, nextEdges) 
+	#pragma omp parallel shared(nNodes, edges, labels, s, S, nextEdges) 
 	{
 		// Prepare to remove edges inside the same group
 		#pragma omp for
@@ -124,33 +118,32 @@ vector<Edge> find_rank_and_remove_edges(uint32_t nNodes, const vector<Edge>& edg
 		{
 			uint32_t from = edges[i].from;
 			uint32_t to = edges[i].to;
-
 			// If the nodes are in different groups, mark the edge
 			if(labels[from] != labels[to])
 				//Not a race condition because each thread writes to a different index
-				edges_mark[i] = 1;
+				s[i] = 1;
 		}
 
 		// if __GNUC__ >= 10, use the new omp scan directive
 		// Otherwise, use the old way to do a prefix sum
 		#if __GNUC__ >= 10
 		// Prefix sum with parallel for
-		#pragma omp for reduction(inscan, + : prefix_sum_temp)
+		#pragma omp for reduction(inscan, + : temp)
         for (uint32_t i = 0; i < edges.size(); i++) {
             
-            prefix_sum_temp += edges_mark[i]; 
-            #pragma omp scan inclusive(prefix_sum_temp)
-            prefix_sum[i] = prefix_sum_temp;
+            temp += s[i]; 
+            #pragma omp scan inclusive(temp)
+            S[i] = temp;
         }
 		#else
 		// Prefix sum sequential
 		#pragma omp single
 		{
 			// Prefix sum
-			prefix_sum[0] = edges_mark[0];
+			S[0] = s[0];
 			for(uint32_t i = 1; i < edges.size(); i++)
 			{
-				prefix_sum[i] = edges_mark[i] + prefix_sum[i - 1];
+				S[i] = s[i] + S[i - 1];
 			}
 		}
 		#endif
@@ -159,8 +152,8 @@ vector<Edge> find_rank_and_remove_edges(uint32_t nNodes, const vector<Edge>& edg
 		// Deallocate memory from the previous used vector
 		#pragma omp single
 		{
-			vector<uint32_t>().swap(edges_mark); // Free edges_mark memory
-			nextEdges.resize(prefix_sum[edges.size() - 1]);
+			vector<uint32_t>().swap(s); // Free s memory
+			nextEdges.resize(S[edges.size() - 1]);
 		}
 		
 		// Copy only edges that are between different groups
@@ -173,35 +166,26 @@ vector<Edge> find_rank_and_remove_edges(uint32_t nNodes, const vector<Edge>& edg
 			// If the nodes are in different groups, add the edge to the nextEdges vector
 			if(labels[from] != labels[to])
 				//Not a race condition because:
-				// if the condition is true, edges_mark[i] will be 1, so prefix_sum[i] will be different from prefix_sum[i-1]
-				nextEdges[prefix_sum[i] - 1] = (labels[from] < labels[to] ? Edge{labels[from], labels[to]} : Edge{labels[to], labels[from]});			
+				// if the condition is true, s[i] will be 1, so S[i] will be different from S[i-1]
+				nextEdges[S[i] - 1] = (labels[from] < labels[to] ? Edge{labels[from], labels[to]} : Edge{labels[to], labels[from]});			
 		}
 	}
 
 	return nextEdges;
 }
 
-void map_results_back(uint32_t nNodes, const vector<Edge>& edges, const vector<uint32_t>& labels, vector<uint32_t>& map)
+void map_results_back(uint32_t nNodes, const vector<Edge>& edges, const vector<atomic<uint32_t>>& labels, vector<atomic<uint32_t>>& map)
 {
 	#pragma omp parallel for shared(edges, labels, map)
 	for(uint32_t i = 0; i < edges.size(); i++)
 	{
 		uint32_t from = edges[i].from;
 		uint32_t to = edges[i].to;
-
-		// The race condition is only in the labels that has been previously changed
-		// So, again, atomic writes is sufficient
-		
+		// Race condition on labels avoided by using atomic variables
 		if(to == labels[from])
-		{
-			#pragma omp atomic write
-			map[from] = map[to];
-		}
+			map[from].store(map[to]);
 		else if(from == labels[to])
-		{
-			#pragma omp atomic write
-			map[to] = map[from];
-		}
+			map[to].store(map[from]);
 	}
 
 }
@@ -247,7 +231,7 @@ int main(int argc, char* argv[]) {
 	//---------------------- Compute CC ----------------------
 
 	// Initialize the labels
-	vector<uint32_t> labels(input.vertexCount());
+	vector<atomic<uint32_t>> labels(input.vertexCount());
 	for(uint32_t i = 0; i < input.vertexCount(); i++) {
 		labels[i] = i;
 	}
@@ -259,7 +243,7 @@ int main(int argc, char* argv[]) {
 	auto start = chrono::high_resolution_clock::now();
 
 	//Compute the connected components
-	vector<uint32_t>& map = par_randomized_cc(input.vertexCount(), edges, labels, &iteration);
+	vector<atomic<uint32_t>>& map = par_randomized_cc(input.vertexCount(), edges, labels, &iteration);
 
 	//Stop the timer
 	auto end = chrono::high_resolution_clock::now();
