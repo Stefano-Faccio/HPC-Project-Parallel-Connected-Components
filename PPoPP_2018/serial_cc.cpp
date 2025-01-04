@@ -14,6 +14,9 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 
+	// Initialize MPI
+	MPI_Init(&argc, &(argv));
+
 	//Start the timer
 	double start_time = MPI_Wtime();
 
