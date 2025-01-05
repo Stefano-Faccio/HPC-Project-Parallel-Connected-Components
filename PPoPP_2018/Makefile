@@ -1,5 +1,12 @@
-#CXX = /apps/mpich-3.2/bin/mpicxx #Compile on cluster
-CXX = mpiCC #Compile on local machine
+HP_CLUSTER = 1
+
+ifeq ($(HP_CLUSTER), 1)
+# Compiler for HPC
+CXX = /apps/mpich-3.2/bin/mpicxx
+else
+# Compiler for local machine
+CXX = mpiCC
+endif
 
 BOOST_PATH = ../boost_1_83_0/
 CXXFLAGS = -std=c++11 -O2 -fopenmp -Wall -g -pedantic -I./$(BOOST_PATH) 
@@ -19,7 +26,7 @@ OBJDIR = obj
 OBJ_SERIAL = $(patsubst %.cpp,$(OBJDIR)/%.o,$(SRC_SERIAL))
 OBJ_PARALLEL = $(patsubst %.cpp,$(OBJDIR)/%.o,$(SRC_PARALLEL))
 
-# olor codes
+# Color codes
 BLACK=\033[0;30m# Black
 RED=\033[0;31m# Red
 GREEN=\033[1;32m# Green
@@ -29,6 +36,19 @@ PURPLE=\033[1;35m# Purple
 CYAN=\033[0;36m# Cyan
 WHITE=\033[0;37m# White
 NC = \033[0m# No Color
+
+# If HP_CLUSTER is 1, then clear all the color codes
+ifeq ($(HP_CLUSTER), 1)
+BLACK=
+RED=
+GREEN=
+YELLOW=
+BLUE=
+PURPLE=
+CYAN=
+WHITE=
+NC=
+endif
 
 all: $(TARGET_SERIAL) $(TARGET_PARALLEL)
 

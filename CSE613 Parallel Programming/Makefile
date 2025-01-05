@@ -1,6 +1,12 @@
-CXX = g++
+HP_CLUSTER = 1
+
+ifeq ($(HP_CLUSTER), 1)
 # Compiler for HPC
-#CXX = /apps/gcc-9.1.0/local/bin/g++-9.1.0
+CXX = /apps/gcc-9.1.0/local/bin/g++-9.1.0
+else
+# Compiler for local machine
+CXX = g++
+endif
 
 BOOST_PATH = ../boost_1_83_0/
 CXXFLAGS = -std=c++11 -O2 -fopenmp -Wall -g -pedantic -I./$(BOOST_PATH) 
@@ -18,7 +24,7 @@ OBJDIR = obj
 OBJ_DETE = $(patsubst %.cpp,$(OBJDIR)/%.o,$(SRC_DETE))
 OBJ_RAND = $(patsubst %.cpp,$(OBJDIR)/%.o,$(SRC_RAND))
 
-# olor codes
+# Color codes
 BLACK=\033[0;30m# Black
 RED=\033[0;31m# Red
 GREEN=\033[1;32m# Green
@@ -28,6 +34,19 @@ PURPLE=\033[1;35m# Purple
 CYAN=\033[0;36m# Cyan
 WHITE=\033[0;37m# White
 NC = \033[0m# No Color
+
+# If HP_CLUSTER is 1, then clear all the color codes
+ifeq ($(HP_CLUSTER), 1)
+BLACK=
+RED=
+GREEN=
+YELLOW=
+BLUE=
+PURPLE=
+CYAN=
+WHITE=
+NC=
+endif
 
 all: $(TARGET_DETE) $(TARGET_RAND)
 
