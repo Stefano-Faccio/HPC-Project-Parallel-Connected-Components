@@ -1,6 +1,6 @@
-#CXX = g++
+CXX = g++
 # Compiler for HPC
-CXX = /apps/gcc-9.1.0/local/bin/g++-9.1.0
+#CXX = /apps/gcc-9.1.0/local/bin/g++-9.1.0
 
 BOOST_PATH = ../boost_1_83_0/
 CXXFLAGS = -std=c++11 -O2 -fopenmp -Wall -g -pedantic -I./$(BOOST_PATH) 
@@ -8,8 +8,8 @@ CXXFLAGS = -std=c++11 -O2 -fopenmp -Wall -g -pedantic -I./$(BOOST_PATH)
 #Deterministic and randomized version
 FILENAME_DETE = deterministic_cc.cpp
 FILENAME_RAND = randomized_cc.cpp
-SRC_DETE =  $(FILENAME_DETE) $(wildcard utils/*.cpp)
-SRC_RAND =  $(FILENAME_RAND) $(wildcard utils/*.cpp)
+SRC_DETE =  $(wildcard utils/*.cpp) $(FILENAME_DETE) 
+SRC_RAND =  $(wildcard utils/*.cpp) $(FILENAME_RAND) 
 TARGET_DETE = $(basename $(FILENAME_DETE)).out
 TARGET_RAND = $(basename $(FILENAME_RAND)).out
 
@@ -48,6 +48,6 @@ $(OBJDIR)/%.o: %.cpp
 
 clean:
 	@echo "$(RED)Cleaning old compiled files$(NC)"
-	rm -f $(OBJ_DETE) $(TARGET_DETE)
+	rm -f $(OBJ_DETE) $(OBJ_RAND) $(TARGET_DETE) $(TARGET_RAND)
 
 .PHONY: all clean
