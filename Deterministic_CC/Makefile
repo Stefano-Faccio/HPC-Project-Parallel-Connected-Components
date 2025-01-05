@@ -1,4 +1,4 @@
-CXX = g++-14
+CXX = g++-9
 # Compiler for HPC
 #CXX = /apps/gcc-9.1.0/local/bin/g++-9.1.0
 
