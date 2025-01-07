@@ -23,6 +23,8 @@ using namespace std;
 
 void par_MPI_slave_deterministic_cc()
 {
+	cout << "Salve" << endl;
+
 	// Receive the number of edges
 	uint32_t nEdges_local;
 	MPI_Scatter(nullptr, 1, MPI_UINT32_T, &nEdges_local, 1, MPI_UINT32_T, 0, MPI_COMM_WORLD);
@@ -32,6 +34,17 @@ void par_MPI_slave_deterministic_cc()
 
 	// Receive the slice of edges
 	MPI_Scatterv(nullptr, nullptr, nullptr, MPIEdge::edge_type, edges_slice.data(), nEdges_local, MPIEdge::edge_type, 0, MPI_COMM_WORLD);
+
+	// Print the received edges
+	for (uint32_t i = 0; i < nEdges_local; i++)
+	{
+		cout << "Rank: " << 1 << " Edge: " << edges_slice[i].from << " " << edges_slice[i].to << endl;
+	}
+
+	// Send to the master the number of edges
+	MPI_Gather(&nEdges_local, 1, MPI_UINT32_T, nullptr, 1, MPI_UINT32_T, 0, MPI_COMM_WORLD);
+	// Send to the master the slice of edges
+	MPI_Send(edges_slice.data(), nEdges_local, MPIEdge::edge_type, 0, 0, MPI_COMM_WORLD);
 }
 
 vector<uint32_t>& par_MPI_master_deterministic_cc(int rank, int group_size, uint32_t nNodes, uint32_t nEdges, const vector<Edge>& edges, vector<uint32_t>& labels, int* iteration) 
@@ -61,7 +74,25 @@ vector<uint32_t>& par_MPI_master_deterministic_cc(int rank, int group_size, uint
 	// Send a slice of the edges to each process
 	MPI_Scatterv(edges.data(), edges_per_proc.data(), displacements.data(), MPIEdge::edge_type, edges_slice.data(), nEdges_local, MPIEdge::edge_type, 0, MPI_COMM_WORLD);
 
- 
+	// Print the received edges
+	for (uint32_t i = 0; i < nEdges_local; i++)
+	{
+		cout << "Rank: " << rank << " Edge: " << edges_slice[i].from << " " << edges_slice[i].to << endl;
+	}
+
+	// Recive the number of edges from 1 process
+	MPI_Gather(&nEdges_local, 1, MPI_UINT32_T, nullptr, 1, MPI_UINT32_T, 0, MPI_COMM_WORLD);
+	edges_slice.clear();
+	edges_slice.resize(nEdges_local);
+
+	// Recive the slice of edges from 1 process
+	MPI_Recv(edges_slice.data(), nEdges_local, MPIEdge::edge_type, 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+	
+	// Print the received edges
+	for (uint32_t i = 0; i < nEdges_local; i++)
+	{
+		cout << "Rank: " << 1 << " Edge: " << edges_slice[i].from << " " << edges_slice[i].to << endl;
+	}
 	return labels;
 }
 
@@ -168,6 +199,9 @@ int main(int argc, char *argv[])
 		//Compute the connected components
 		par_MPI_slave_deterministic_cc();
 	}
+
+	//Wait for all processes to finish
+	MPI_Barrier(MPI_COMM_WORLD);
 
 	// Close MPI
 	MPI_Finalize();
