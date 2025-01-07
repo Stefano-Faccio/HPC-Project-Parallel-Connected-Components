@@ -12,6 +12,7 @@
 #include "utils/Edge.hpp"
 #include "utils/MPIEdge.hpp"
 #include "utils/GraphInputIterator.hpp"
+#include "utils/mpi_parallel_cc_utils.hpp"
 
 using namespace std;
 
@@ -20,7 +21,20 @@ using namespace std;
         cout << "Point n: " << message << endl; \
     }
 
-vector<uint32_t>& par_MPI_deterministic_cc(int rank, int group_size, uint32_t nNodes, uint32_t nEdges, const vector<Edge>& edges, vector<uint32_t>& labels, int* iteration) 
+void par_MPI_slave_deterministic_cc()
+{
+	// Receive the number of edges
+	uint32_t nEdges_local;
+	MPI_Scatter(nullptr, 1, MPI_UINT32_T, &nEdges_local, 1, MPI_UINT32_T, 0, MPI_COMM_WORLD);
+
+	// Allocate memory for the slice of edges
+	vector<Edge> edges_slice(nEdges_local);
+
+	// Receive the slice of edges
+	MPI_Scatterv(nullptr, nullptr, nullptr, MPIEdge::edge_type, edges_slice.data(), nEdges_local, MPIEdge::edge_type, 0, MPI_COMM_WORLD);
+}
+
+vector<uint32_t>& par_MPI_master_deterministic_cc(int rank, int group_size, uint32_t nNodes, uint32_t nEdges, const vector<Edge>& edges, vector<uint32_t>& labels, int* iteration) 
 {
 	// Increment the iteration
 	if(rank == 0)
@@ -28,19 +42,24 @@ vector<uint32_t>& par_MPI_deterministic_cc(int rank, int group_size, uint32_t nN
 		
 	PRINT("Iteration " << *iteration << " Number of edges: " << edges.size(), rank);
 
+	// Calculate the number of edges to send to each processor
+	vector<int> edges_per_proc = calculate_edges_per_processor(rank, group_size, edges);
+	// Calculate the displacement vector
+	vector<int> displacements(group_size, 0);
+
 	// Send and receive the edges number
-	MPI_Bcast(&nEdges, 1, MPI_UINT32_T, 0, MPI_COMM_WORLD);
+	uint32_t nEdges_local;
+	MPI_Scatter(edges_per_proc.data(), 1, MPI_UINT32_T, &nEdges_local, 1, MPI_UINT32_T, 0, MPI_COMM_WORLD);
 	
 	// Base case
-	if(nEdges == 0 || nNodes == 0) 
+	if(nEdges_local == 0 || nNodes == 0) 
 		return labels;
 
 	// Allocate memory for slice of edges
-	vector<Edge> edges_slice(nEdges);
+	vector<Edge> edges_slice(nEdges_local);
 
 	// Send a slice of the edges to each process
-	MPI_Scatter(edges.data(), edges.size()/group_size , MPIEdge::edge_type, 
-		edges_slice.data(), edges_slice.size(),  MPIEdge::edge_type, 0, MPI_COMM_WORLD);
+	MPI_Scatterv(edges.data(), edges_per_proc.data(), displacements.data(), MPIEdge::edge_type, edges_slice.data(), nEdges_local, MPIEdge::edge_type, 0, MPI_COMM_WORLD);
 
  
 	return labels;
@@ -116,7 +135,7 @@ int main(int argc, char *argv[])
 		MPI_Bcast(&nNodes, 1, MPI_UINT32_T, 0, MPI_COMM_WORLD);		
 
 		//Compute the connected components
-		vector<uint32_t> map = par_MPI_deterministic_cc(rank, group_size, nNodes, real_edge_count, edges, labels, &iteration);
+		vector<uint32_t> map = par_MPI_master_deterministic_cc(rank, group_size, nNodes, real_edge_count, edges, labels, &iteration);
 
 		//---------------------- End the timer and print the results ----------------------
 		double end_time = MPI_Wtime();
@@ -141,6 +160,13 @@ int main(int argc, char *argv[])
 		}
 		cout << endl;
 		#endif
+	}
+	else {
+		// Receive the number of nodes
+		MPI_Bcast(&nNodes, 1, MPI_UINT32_T, 0, MPI_COMM_WORLD);
+
+		//Compute the connected components
+		par_MPI_slave_deterministic_cc();
 	}
 
 	// Close MPI
