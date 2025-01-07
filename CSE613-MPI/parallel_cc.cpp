@@ -9,29 +9,39 @@
 #include <algorithm>
 #include <unordered_set>
 //Custom libraries
-#include "../PPoPP_2018/utils/Edge.hpp"
-#include "../PPoPP_2018/utils/GraphInputIterator.hpp"
+#include "utils/Edge.hpp"
+#include "utils/MPIEdge.hpp"
+#include "utils/GraphInputIterator.hpp"
 
 using namespace std;
-
 
 #define PRINT(message, rank) \
     if(rank == 0) { \
         cout << "Point n: " << message << endl; \
     }
 
-
-vector<uint32_t>& par_MPI_deterministic_cc(int rank, int group_size, uint32_t nNodes, const vector<Edge>& edges, vector<uint32_t>& labels, int* iteration) 
+vector<uint32_t>& par_MPI_deterministic_cc(int rank, int group_size, uint32_t nNodes, uint32_t nEdges, const vector<Edge>& edges, vector<uint32_t>& labels, int* iteration) 
 {
 	// Increment the iteration
-	if (rank == 0)
+	if(rank == 0)
 		(*iteration)++;
-	
+		
 	PRINT("Iteration " << *iteration << " Number of edges: " << edges.size(), rank);
 
+	// Send and receive the edges number
+	MPI_Bcast(&nEdges, 1, MPI_UINT32_T, 0, MPI_COMM_WORLD);
+	
 	// Base case
-	if(edges.size() == 0 || nNodes == 0) 
-		return;
+	if(nEdges == 0 || nNodes == 0) 
+		return labels;
+
+	// Allocate memory for slice of edges
+	vector<Edge> edges_slice(nEdges);
+
+	// Send a slice of the edges to each process
+	MPI_Scatter(edges.data(), edges.size()/group_size , MPIEdge::edge_type, 
+		edges_slice.data(), edges_slice.size(),  MPIEdge::edge_type, 0, MPI_COMM_WORLD);
+
  
 	return labels;
 }
@@ -52,6 +62,9 @@ int main(int argc, char *argv[])
 	MPI_Comm_size(MPI_COMM_WORLD, &group_size);
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
+	//Initialize the MPIEdge type
+	MPIEdge::constructType();
+
 	// Variables to store the number of nodes and edges
 	uint32_t nNodes, real_edge_count;
 	// Vector to store the edges
@@ -61,7 +74,7 @@ int main(int argc, char *argv[])
 	// Iteration counter
 	int iteration;
 
-	//---------------------- Read the graph ----------------------
+	//---------------------- Read the graph and initialize data ----------------------
 	if(rank == 0) {	
 		// Read the number of vertices and edges from the input file
 		GraphInputIterator input(argv[1]);
@@ -95,27 +108,17 @@ int main(int argc, char *argv[])
 
 		// Initialize the iteration counter
 		iteration = 0;
-	}
 
-	if( rank == 0 ) {
-		// Send the number of nodes to all the processes
-		for(int i = 1; i < group_size; i++) {
-			MPI_Send(&nNodes, 1, MPI_UINT32_T, i, 0, MPI_COMM_WORLD);
-		}
-	} else {
-		// Receive the number of nodes
-		MPI_Recv(&nNodes, 1, MPI_UINT32_T, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-	}
+		// Start the timer
+		double start_time = MPI_Wtime();
 
-	// Start the timer
-	double start_time = MPI_Wtime();
+		//---------------------- Broadcast the number of nodes ----------------------
+		MPI_Bcast(&nNodes, 1, MPI_UINT32_T, 0, MPI_COMM_WORLD);		
 
-	//Compute the connected components
-	vector<uint32_t>& map = par_MPI_deterministic_cc(rank, group_size, nNodes, edges, labels, &iteration);
+		//Compute the connected components
+		vector<uint32_t> map = par_MPI_deterministic_cc(rank, group_size, nNodes, real_edge_count, edges, labels, &iteration);
 
-	// Output the number of connected components if the process is the master
-	if (rank == 0)
-	{
+		//---------------------- End the timer and print the results ----------------------
 		double end_time = MPI_Wtime();
 		double elapsed_time = end_time - start_time;
 
