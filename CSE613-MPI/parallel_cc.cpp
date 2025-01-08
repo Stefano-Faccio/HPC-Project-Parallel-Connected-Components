@@ -21,10 +21,32 @@ using namespace std;
         cout << "Point n: " << message << endl; \
     }
 
+#define DEBUG 1
+
+pair<uint32_t, uint32_t> count_hooks(const vector<Edge>& edges)
+{
+	uint32_t hooks_small_2_large = 0, hooks_large_2_small = 0;
+	for (uint32_t i = 0; i < edges.size(); i++)
+	{
+		uint32_t from = edges[i].from;
+		uint32_t to = edges[i].to;
+
+		if (from < to)
+			hooks_small_2_large++;
+		else if (from > to)
+			hooks_large_2_small++;
+		else
+		{
+			string str = "Rank: " + to_string(0) + " self loop found: " + to_string(from) + " " + to_string(to) + "\n";
+			cerr << str;
+		}			
+	}
+
+	return make_pair(hooks_small_2_large, hooks_large_2_small);
+}
+
 void par_MPI_slave_deterministic_cc()
 {
-	cout << "Salve" << endl;
-
 	// Receive the number of edges
 	uint32_t nEdges_local;
 	MPI_Scatter(nullptr, 1, MPI_UINT32_T, &nEdges_local, 1, MPI_UINT32_T, 0, MPI_COMM_WORLD);
@@ -35,16 +57,20 @@ void par_MPI_slave_deterministic_cc()
 	// Receive the slice of edges
 	MPI_Scatterv(nullptr, nullptr, nullptr, MPIEdge::edge_type, edges_slice.data(), nEdges_local, MPIEdge::edge_type, 0, MPI_COMM_WORLD);
 
+	#if DEBUG
+	string str = "";
+	str += "SLAVE Rank: " + to_string(1) + " Edges: ";
 	// Print the received edges
 	for (uint32_t i = 0; i < nEdges_local; i++)
-	{
-		cout << "Rank: " << 1 << " Edge: " << edges_slice[i].from << " " << edges_slice[i].to << endl;
-	}
+		str += "(" + to_string(edges_slice[i].from) + "," + to_string(edges_slice[i].to) + ") ";
+	str += "\n";
+	cout << str;
+	#endif
 
-	// Send to the master the number of edges
-	MPI_Gather(&nEdges_local, 1, MPI_UINT32_T, nullptr, 1, MPI_UINT32_T, 0, MPI_COMM_WORLD);
-	// Send to the master the slice of edges
-	MPI_Send(edges_slice.data(), nEdges_local, MPIEdge::edge_type, 0, 0, MPI_COMM_WORLD);
+	// Count the number of hooks
+	pair<uint32_t, uint32_t> hooks = count_hooks(edges_slice);
+	uint32_t hooks_small_2_large = hooks.first;
+	uint32_t hooks_large_2_small = hooks.second;
 }
 
 vector<uint32_t>& par_MPI_master_deterministic_cc(int rank, int group_size, uint32_t nNodes, uint32_t nEdges, const vector<Edge>& edges, vector<uint32_t>& labels, int* iteration) 
@@ -55,10 +81,10 @@ vector<uint32_t>& par_MPI_master_deterministic_cc(int rank, int group_size, uint
 		
 	PRINT("Iteration " << *iteration << " Number of edges: " << edges.size(), rank);
 
-	// Calculate the number of edges to send to each processor
+	// Calculate the number of edges to send to each processor 
 	vector<int> edges_per_proc = calculate_edges_per_processor(rank, group_size, edges);
-	// Calculate the displacement vector
-	vector<int> displacements(group_size, 0);
+	// Calculate the displacements for the scatterv function
+	vector<int> displacements = calculate_displacements(rank, group_size, edges_per_proc);
 
 	// Send and receive the edges number
 	uint32_t nEdges_local;
@@ -74,25 +100,21 @@ vector<uint32_t>& par_MPI_master_deterministic_cc(int rank, int group_size, uint
 	// Send a slice of the edges to each process
 	MPI_Scatterv(edges.data(), edges_per_proc.data(), displacements.data(), MPIEdge::edge_type, edges_slice.data(), nEdges_local, MPIEdge::edge_type, 0, MPI_COMM_WORLD);
 
+	#if DEBUG
+	string str = "";
+	str += "MASTER Rank: " + to_string(rank) + " Edges: ";
 	// Print the received edges
 	for (uint32_t i = 0; i < nEdges_local; i++)
-	{
-		cout << "Rank: " << rank << " Edge: " << edges_slice[i].from << " " << edges_slice[i].to << endl;
-	}
+		str += "(" + to_string(edges_slice[i].from) + "," + to_string(edges_slice[i].to) + ") ";
+	str += "\n";
+	cout << str;
+	#endif
 
-	// Recive the number of edges from 1 process
-	MPI_Gather(&nEdges_local, 1, MPI_UINT32_T, nullptr, 1, MPI_UINT32_T, 0, MPI_COMM_WORLD);
-	edges_slice.clear();
-	edges_slice.resize(nEdges_local);
+	// Count the number of hooks
+	pair<uint32_t, uint32_t> hooks = count_hooks(edges_slice);
+	uint32_t hooks_small_2_large = hooks.first;
+	uint32_t hooks_large_2_small = hooks.second;
 
-	// Recive the slice of edges from 1 process
-	MPI_Recv(edges_slice.data(), nEdges_local, MPIEdge::edge_type, 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-	
-	// Print the received edges
-	for (uint32_t i = 0; i < nEdges_local; i++)
-	{
-		cout << "Rank: " << 1 << " Edge: " << edges_slice[i].from << " " << edges_slice[i].to << endl;
-	}
 	return labels;
 }
 
