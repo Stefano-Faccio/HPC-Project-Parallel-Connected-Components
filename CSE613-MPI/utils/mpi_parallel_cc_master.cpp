@@ -8,6 +8,8 @@ vector<uint32_t>& par_MPI_master_deterministic_cc(int rank, int group_size, uint
     string str = "Iteration " + to_string(*iteration) + " Number of edges: " + to_string(edges.size()) + "\n";
     cout << str;
 
+	//---------------------- Send a slice of the edges to each process ----------------------
+
 	// Calculate the number of edges to send to each processor 
 	vector<int> edges_per_proc = calculate_edges_per_processor(rank, group_size, edges);
 	// Calculate the displacements for the scatterv function
@@ -39,6 +41,8 @@ vector<uint32_t>& par_MPI_master_deterministic_cc(int rank, int group_size, uint
 	cout << str;
 	#endif
 
+	// ---------------------- Count the number of hooks ----------------------
+
 	// Count the number of hooks
 	pair<uint32_t, uint32_t> hooks = count_hooks(edges_slice);
 	uint32_t hooks_small_2_large = hooks.first;
@@ -47,6 +51,8 @@ vector<uint32_t>& par_MPI_master_deterministic_cc(int rank, int group_size, uint
 	// AllReduce the number of hooks (Use of MPI_IN_PLACE option)
 	MPI_Allreduce(MPI_IN_PLACE, &hooks_small_2_large, 1, MPI_UINT32_T, MPI_SUM, MPI_COMM_WORLD);
 	MPI_Allreduce(MPI_IN_PLACE, &hooks_large_2_small, 1, MPI_UINT32_T, MPI_SUM, MPI_COMM_WORLD);
+
+	// ---------------------- Choose the hook direction ----------------------
 
 	// Choose the hook direction
 	choose_hook_direction(edges_slice, hooks_small_2_large, hooks_large_2_small, labels);
@@ -57,11 +63,15 @@ vector<uint32_t>& par_MPI_master_deterministic_cc(int rank, int group_size, uint
 	else
 		MPI_Reduce(MPI_IN_PLACE, labels.data(), nNodes, MPI_UINT32_T, MPI_MIN, 0, MPI_COMM_WORLD);
 
+	// ---------------------- Find the roots ----------------------
+
 	// Find the roots for every node
 	find_roots(nNodes, labels);
 
 	// Broadcast the labels
 	MPI_Bcast(labels.data(), nNodes, MPI_UINT32_T, 0, MPI_COMM_WORLD);
+
+	// ---------------------- Mark new edges ----------------------
 
 	// Mark new edges
 	vector<uint32_t> marked_edges_local = mark_new_edges(edges_slice, labels);
@@ -79,6 +89,9 @@ vector<uint32_t>& par_MPI_master_deterministic_cc(int rank, int group_size, uint
 	vector<uint32_t>().swap(marked_edges_local);
 	// Free the memory of the marked edges
 	vector<uint32_t>().swap(marked_edges);
+
+	// ---------------------- Create the next edges ----------------------
+
 	// Allocate memory for the next edges
 	vector<Edge> nextEdges(prefix_sum.back());
 
