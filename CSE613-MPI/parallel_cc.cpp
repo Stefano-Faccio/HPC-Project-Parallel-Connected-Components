@@ -80,6 +80,9 @@ void par_MPI_slave_deterministic_cc(int rank, int group_size, uint32_t nNodes)
 	// Gather the marked edges
 	MPI_Gatherv(marked_edges_edges.data(), nEdges_local, MPI_UINT32_T, nullptr, nullptr, nullptr, MPI_UINT32_T, 0, MPI_COMM_WORLD);
 
+	// Free the memory of the marked edges
+	vector<uint32_t>().swap(marked_edges_edges);
+
 	// Wait the master to compute the prefix sum
 
 
@@ -88,8 +91,7 @@ void par_MPI_slave_deterministic_cc(int rank, int group_size, uint32_t nNodes)
 vector<uint32_t>& par_MPI_master_deterministic_cc(int rank, int group_size, uint32_t nNodes, uint32_t nEdges, const vector<Edge>& edges, vector<uint32_t>& labels, int* iteration) 
 {
 	// Increment the iteration
-	if(rank == 0)
-		(*iteration)++;
+	(*iteration)++;
 		
 	PRINT("Iteration " << *iteration << " Number of edges: " << edges.size(), rank);
 
@@ -152,15 +154,23 @@ vector<uint32_t>& par_MPI_master_deterministic_cc(int rank, int group_size, uint
 	vector<uint32_t> marked_edges_local = mark_new_edges(edges_slice, labels);
 
 	// Allocate memory for the marked edges
-	vector<uint32_t> marked_edges_edges(nEdges);
+	vector<uint32_t> marked_edges(nEdges);
 
 	// Gather the marked edges
-	MPI_Gatherv(marked_edges_local.data(), nEdges_local, MPI_UINT32_T, marked_edges_edges.data(), edges_per_proc.data(), displacements.data(), MPI_UINT32_T, 0, MPI_COMM_WORLD);
+	MPI_Gatherv(marked_edges_local.data(), nEdges_local, MPI_UINT32_T, marked_edges.data(), edges_per_proc.data(), displacements.data(), MPI_UINT32_T, 0, MPI_COMM_WORLD);
 
 	// Compute the prefix sum of the marked edges
-	vector<uint32_t> prefix_sum = compute_prefix_sum(marked_edges_edges);
+	vector<uint32_t> prefix_sum = compute_prefix_sum(marked_edges);
+
+	// Free the memory of the marked edges local
+	vector<uint32_t>().swap(marked_edges_local);
+	// Free the memory of the marked edges
+	vector<uint32_t>().swap(marked_edges);
+	// Allocate memory for the next edges
+	vector<Edge> nextEdges(prefix_sum.back());
 
 	
+
 
 	return labels;
 }
