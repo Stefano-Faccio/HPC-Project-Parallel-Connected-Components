@@ -8,10 +8,13 @@
 #include <chrono>
 #include <algorithm>
 #include <unordered_set>
+#include <numeric>
 //Custom libraries
-#include "Edge.hpp"
-#include "MPIEdge.hpp"
-#include "GraphInputIterator.hpp"
-#include "mpi_parallel_cc_utils.hpp"
+#include "utils/Edge.hpp"
+#include "utils/MPIEdge.hpp"
+#include "utils/GraphInputIterator.hpp"
+#include "utils/mpi_parallel_cc_utils.hpp"
+
+using namespace std;
 
 vector<uint32_t>& par_MPI_master_deterministic_cc(int rank, int group_size, uint32_t nNodes, uint32_t nEdges, const vector<Edge>& edges, vector<uint32_t>& labels, int* iteration);

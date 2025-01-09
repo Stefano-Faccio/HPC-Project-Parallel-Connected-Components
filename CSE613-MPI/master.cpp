@@ -1,4 +1,4 @@
-#include "mpi_parallel_cc_master.hpp"
+#include "master.hpp"
 
 vector<uint32_t>& par_MPI_master_deterministic_cc(int rank, int group_size, uint32_t nNodes, uint32_t nEdges, const vector<Edge>& edges, vector<uint32_t>& labels, int* iteration) 
 {
@@ -15,7 +15,10 @@ vector<uint32_t>& par_MPI_master_deterministic_cc(int rank, int group_size, uint
 	// Calculate the displacements for the scatterv function
 	vector<int> displacements = calculate_displacements(rank, group_size, edges_per_proc);
 
-	// Send and receive the edges number
+	// Send the number of total edges
+	MPI_Bcast(&nEdges, 1, MPI_UINT32_T, 0, MPI_COMM_WORLD);
+
+	// Send the number of local edges
 	uint32_t nEdges_local;
 	MPI_Scatter(edges_per_proc.data(), 1, MPI_UINT32_T, &nEdges_local, 1, MPI_UINT32_T, 0, MPI_COMM_WORLD);
 	
@@ -79,6 +82,8 @@ vector<uint32_t>& par_MPI_master_deterministic_cc(int rank, int group_size, uint
 	// Allocate memory for the marked edges
 	vector<uint32_t> marked_edges(nEdges);
 
+	// ---------------------- Compute the prefix sum of the marked edges ----------------------
+
 	// Gather the marked edges
 	MPI_Gatherv(marked_edges_local.data(), nEdges_local, MPI_UINT32_T, marked_edges.data(), edges_per_proc.data(), displacements.data(), MPI_UINT32_T, 0, MPI_COMM_WORLD);
 
@@ -92,10 +97,13 @@ vector<uint32_t>& par_MPI_master_deterministic_cc(int rank, int group_size, uint
 
 	// ---------------------- Create the next edges ----------------------
 
-	// Allocate memory for the next edges
-	vector<Edge> nextEdges(prefix_sum.back());
+	// Compute the next edges
+	vector<Edge> nextEdges = compute_next_edges(edges_slice, labels, prefix_sum);
+	// Free the memory of the prefix sum
+	vector<uint32_t>().swap(prefix_sum);
 
-	
+	// Reduce the next edges
+	MPI_Allreduce(MPI_IN_PLACE, nextEdges.data(), nEdges_local, MPIEdge::edge_type, MPIEdge::edge_type, MPI_COMM_WORLD);
 
 
 	return labels;
