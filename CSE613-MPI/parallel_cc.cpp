@@ -13,8 +13,6 @@
 #include "utils/MPIEdge.hpp"
 #include "utils/GraphInputIterator.hpp"
 #include "utils/mpi_parallel_cc_utils.hpp"
-#include "master.hpp"
-#include "slave.hpp"
 
 using namespace std;
 
