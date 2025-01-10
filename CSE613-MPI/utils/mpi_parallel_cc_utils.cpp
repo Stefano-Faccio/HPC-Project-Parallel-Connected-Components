@@ -92,48 +92,9 @@ void find_roots(uint32_t nNodes, vector<uint32_t>& labels)
 	return;
 }
 
-vector<uint32_t> mark_new_edges(const vector<Edge>& edges, const vector<uint32_t>& labels) 
+vector<Edge> compute_next_edges(const vector<Edge>& edges, const vector<uint32_t>& labels)
 {
-	vector<uint32_t> edges_mark(edges.size(), 0);
-	
-		for(uint32_t i = 0; i < edges.size(); i++)
-		{
-			uint32_t from = edges[i].from;
-			uint32_t to = edges[i].to;
-
-			// If the nodes are in different groups, mark the edge
-			if(labels[from] != labels[to])
-				edges_mark[i] = 1;
-		}
-	return edges_mark;
-}
-
-vector<uint32_t> compute_prefix_sum(int rank, int group_size, uint32_t nEdges, uint32_t nEdges_local, const vector<uint32_t>& marked_edges)
-{
-	vector<uint32_t> prefix_sum(marked_edges.size());
-
-	/*
-	// Compute local partial prefix sum of the marked edges
-	vector<uint32_t> partial_prefix_sum(nEdges_local);	
-	partial_sum(marked_edges.begin(), marked_edges.end(), partial_prefix_sum.begin());
-
-	// Scan the partial prefix sum (with that, every node has the local prefix sum of the marked edges)
-	uint32_t local_sum = partial_prefix_sum.back();
-	MPI_Scan(MPI_IN_PLACE, &local_sum, 1, MPI_UINT32_T, MPI_SUM, MPI_COMM_WORLD);
-	vector<uint32_t> offset(group_size);
-	// Spread the offset sum to all nodes
-	MPI_Allgather(&local_sum, 1, MPI_UINT32_T, offset.data(), 1, MPI_UINT32_T, MPI_COMM_WORLD);
-	*/
-
-
-
-	return prefix_sum;
-}
-
-vector<Edge> compute_next_edges(const vector<Edge>& edges, const vector<uint32_t>& labels, const vector<uint32_t>& prefix_sum)
-{
-	// Allocate memory for the next edges
-	vector<Edge> nextEdges(prefix_sum.back());
+	vector<Edge> nextEdges;
 
 	// Compute the next edges
 	for(uint32_t i = 0; i < edges.size(); i++)
@@ -143,7 +104,10 @@ vector<Edge> compute_next_edges(const vector<Edge>& edges, const vector<uint32_t
 
 		// If the nodes are in different groups, add the edge
 		if(labels[from] != labels[to])
-			nextEdges[prefix_sum[i]] = from < to ? Edge{labels[from], labels[to]} : Edge{labels[to], labels[from]};
+		{
+			Edge edge = from < to ? Edge{labels[from], labels[to]} : Edge{labels[to], labels[from]};
+			nextEdges.push_back(edge);
+		}
 	}
 
 	return nextEdges;
