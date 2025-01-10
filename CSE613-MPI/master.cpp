@@ -99,11 +99,9 @@ vector<uint32_t>& par_MPI_master_deterministic_cc(int rank, int group_size, uint
 
 	// Compute the next edges
 	vector<Edge> nextEdges = compute_next_edges(edges_slice, labels, prefix_sum);
-	// Free the memory of the prefix sum
-	vector<uint32_t>().swap(prefix_sum);
 
 	// Reduce the next edges
-	MPI_Allreduce(MPI_IN_PLACE, nextEdges.data(), nEdges_local, MPIEdge::edge_type, MPIEdge::edge_type, MPI_COMM_WORLD);
+	MPI_Reduce(MPI_IN_PLACE, nextEdges.data(), prefix_sum.back(), MPIEdge::edge_type, , 0, MPI_COMM_WORLD);
 
 
 	return labels;
