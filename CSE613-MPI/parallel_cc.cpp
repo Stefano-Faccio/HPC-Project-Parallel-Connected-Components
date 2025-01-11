@@ -32,7 +32,7 @@ void slave(int rank, int group_size, uint32_t nNodes)
 	MPI_Scatter(nullptr, 1, MPI_UINT32_T, &nEdges_local, 1, MPI_UINT32_T, 0, MPI_COMM_WORLD);
 
 	// Base case
-	if(nEdges_local == 0 || nEdges == 0 || nNodes == 0) 
+	if(nEdges == 0 || nNodes == 0) 
 		return;
 
 	// Allocate memory for the slice of edges
@@ -135,7 +135,7 @@ vector<uint32_t>& master(int rank, int group_size, uint32_t nNodes, uint32_t nEd
 	MPI_Scatter(edges_per_proc.data(), 1, MPI_UINT32_T, &nEdges_local, 1, MPI_UINT32_T, 0, MPI_COMM_WORLD);
 	
 	// Base case
-	if(nEdges_local == 0 || nEdges == 0 || nNodes == 0) 
+	if(nEdges == 0 || nNodes == 0) 
 		return labels;
 
 	// Allocate memory for slice of edges
