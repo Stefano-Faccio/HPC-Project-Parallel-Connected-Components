@@ -17,7 +17,7 @@
 
 using namespace std;
 
-#define DEBUG 1
+#define DEBUG 0
 
 void slave(int rank, int group_size, uint32_t nNodes)
 {
@@ -116,7 +116,7 @@ vector<uint32_t>& master(int rank, int group_size, uint32_t nNodes, uint32_t nEd
 	(*iteration)++;
 		
 	{
-		string str = "Iteration " + to_string(*iteration) + " Number of edges: " + to_string(edges.size()) + "\n";
+		string str = "Iteration - " + to_string(*iteration) + " Number of edges: " + to_string(edges.size()) + "\n";
     	cout << str;
 	}
 
