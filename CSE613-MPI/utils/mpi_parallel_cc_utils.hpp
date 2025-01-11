@@ -12,11 +12,9 @@
 #include "MPIEdge.hpp"
 
 // Function to get the number of edges to send to every processor
-vector<int> calculate_edges_per_processor(int rank, int group_size, const vector<Edge>& edges);
-// Function to get the displacements for the scatterv function
-vector<int> calculate_displacements(int rank, int group_size, const vector<int>& edges_per_processor);
-// Function to get the number of edges to send to every processor and the displacements for the scatterv function
-pair<vector<int>, vector<int>> calculate_edges_per_processor_and_displacements(int rank, int group_size, const vector<Edge>& edges);
+vector<int> calculate_edges_per_processor(int group_size, const vector<Edge>& edges);
+// Function to get the displacements for the scatterv / gatherv functions
+vector<int> calculate_displacements(int group_size, const vector<int>& edges_per_processor);
 // Function to count the number of hooks
 pair<uint32_t, uint32_t> count_hooks(const vector<Edge>& edges);
 // Function to choose the hook direction

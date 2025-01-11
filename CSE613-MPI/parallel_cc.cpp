@@ -8,6 +8,7 @@
 #include <chrono>
 #include <algorithm>
 #include <unordered_set>
+#include <numeric>
 //Custom libraries
 #include "utils/Edge.hpp"
 #include "utils/MPIEdge.hpp"
@@ -30,6 +31,10 @@ void slave(int rank, int group_size, uint32_t nNodes)
 	uint32_t nEdges_local;
 	MPI_Scatter(nullptr, 1, MPI_UINT32_T, &nEdges_local, 1, MPI_UINT32_T, 0, MPI_COMM_WORLD);
 
+	// Base case
+	if(nEdges_local == 0 || nEdges == 0 || nNodes == 0) 
+		return;
+
 	// Allocate memory for the slice of edges
 	vector<Edge> edges_slice(nEdges_local);
 
@@ -42,13 +47,15 @@ void slave(int rank, int group_size, uint32_t nNodes)
 	MPI_Bcast(labels.data(), nNodes, MPI_UINT32_T, 0, MPI_COMM_WORLD);
 
 	#if DEBUG
-	string str = "";
-	str += "SLAVE Rank: " + to_string(1) + " Edges: ";
-	// Print the received edges
-	for (uint32_t i = 0; i < nEdges_local; i++)
-		str += "(" + to_string(edges_slice[i].from) + "," + to_string(edges_slice[i].to) + ") ";
-	str += "\n";
-	cout << str;
+	{
+		string str = "";
+		str += "SLAVE Rank: " + to_string(1) + " Edges: ";
+		// Print the received edges
+		for (uint32_t i = 0; i < nEdges_local; i++)
+			str += "(" + to_string(edges_slice[i].from) + "," + to_string(edges_slice[i].to) + ") ";
+		str += "\n";
+		cout << str;
+	}
 	#endif
 
 	// ---------------------- Count the number of hooks ----------------------
@@ -83,7 +90,23 @@ void slave(int rank, int group_size, uint32_t nNodes)
 	// ---------------------- Create the next edges ----------------------
 
 	// Compute the next edges
-	vector<Edge> nextEdges = compute_next_edges(edges_slice, labels);
+	vector<Edge> nextEdges_local = compute_next_edges(edges_slice, labels);
+
+	// ---------------------- Send the slice of the next edges ----------------------
+
+	// Send the number of local edges
+
+	uint32_t next_nEdges_local = nextEdges_local.size();
+	// Gather the number of local edges
+	MPI_Gather(&next_nEdges_local, 1, MPI_UINT32_T, nullptr, 1, MPI_UINT32_T, 0, MPI_COMM_WORLD);
+
+
+	// Send the slice of next edges
+	MPI_Gatherv(nextEdges_local.data(), next_nEdges_local, MPIEdge::edge_type, nullptr, nullptr, nullptr, MPIEdge::edge_type, 0, MPI_COMM_WORLD);
+
+	// ---------------------- Recursively call the function ----------------------
+	
+	return slave(rank, group_size, nNodes);
 
 }
 
@@ -92,15 +115,17 @@ vector<uint32_t>& master(int rank, int group_size, uint32_t nNodes, uint32_t nEd
 	// Increment the iteration
 	(*iteration)++;
 		
-    string str = "Iteration " + to_string(*iteration) + " Number of edges: " + to_string(edges.size()) + "\n";
-    cout << str;
+	{
+		string str = "Iteration " + to_string(*iteration) + " Number of edges: " + to_string(edges.size()) + "\n";
+    	cout << str;
+	}
 
 	//---------------------- Send a slice of the edges to each process ----------------------
 
 	// Calculate the number of edges to send to each processor 
-	vector<int> edges_per_proc = calculate_edges_per_processor(rank, group_size, edges);
+	vector<int> edges_per_proc = calculate_edges_per_processor(group_size, edges);
 	// Calculate the displacements for the scatterv function
-	vector<int> displacements = calculate_displacements(rank, group_size, edges_per_proc);
+	vector<int> displacements = calculate_displacements(group_size, edges_per_proc);
 
 	// Send the number of total edges
 	MPI_Bcast(&nEdges, 1, MPI_UINT32_T, 0, MPI_COMM_WORLD);
@@ -110,7 +135,7 @@ vector<uint32_t>& master(int rank, int group_size, uint32_t nNodes, uint32_t nEd
 	MPI_Scatter(edges_per_proc.data(), 1, MPI_UINT32_T, &nEdges_local, 1, MPI_UINT32_T, 0, MPI_COMM_WORLD);
 	
 	// Base case
-	if(nEdges_local == 0 || nNodes == 0) 
+	if(nEdges_local == 0 || nEdges == 0 || nNodes == 0) 
 		return labels;
 
 	// Allocate memory for slice of edges
@@ -122,13 +147,15 @@ vector<uint32_t>& master(int rank, int group_size, uint32_t nNodes, uint32_t nEd
 	MPI_Bcast(labels.data(), nNodes, MPI_UINT32_T, 0, MPI_COMM_WORLD);
 
 	#if DEBUG
-	string str = "";
-	str += "MASTER Rank: " + to_string(rank) + " Edges: ";
-	// Print the received edges
-	for (uint32_t i = 0; i < nEdges_local; i++)
-		str += "(" + to_string(edges_slice[i].from) + "," + to_string(edges_slice[i].to) + ") ";
-	str += "\n";
-	cout << str;
+	{
+		string str = "";
+		str += "MASTER Rank: " + to_string(rank) + " Edges: ";
+		// Print the received edges
+		for (uint32_t i = 0; i < nEdges_local; i++)
+			str += "(" + to_string(edges_slice[i].from) + "," + to_string(edges_slice[i].to) + ") ";
+		str += "\n";
+		cout << str;
+	}
 	#endif
 
 	// ---------------------- Count the number of hooks ----------------------
@@ -164,11 +191,27 @@ vector<uint32_t>& master(int rank, int group_size, uint32_t nNodes, uint32_t nEd
 	// ---------------------- Create the next edges ----------------------
 
 	// Compute the next edges
-	vector<Edge> nextEdges = compute_next_edges(edges_slice, labels);
+	vector<Edge> nextEdges_local = compute_next_edges(edges_slice, labels);
 
+	// ---------------------- Gather a slice of the next edges from each process ----------------------
 
+	// Receive the number of local edges
+	vector<int> next_edges_per_proc(group_size);
+	uint32_t next_nEdges_local = nextEdges_local.size();
+	// Gather the number of local edges
+	MPI_Gather(&next_nEdges_local, 1, MPI_UINT32_T, next_edges_per_proc.data(), 1, MPI_UINT32_T, 0, MPI_COMM_WORLD);
 
-	return labels;
+	// Allocate memory for the slice of next edges
+	vector<Edge> next_edges(accumulate(next_edges_per_proc.begin(), next_edges_per_proc.end(), 0));
+	// Calculate the displacements 
+	vector<int> next_displacements = calculate_displacements(group_size, next_edges_per_proc);
+
+	// Gather the slice of next edges from each process
+	MPI_Gatherv(nextEdges_local.data(), next_nEdges_local, MPIEdge::edge_type, next_edges.data(), next_edges_per_proc.data(), next_displacements.data(), MPIEdge::edge_type, 0, MPI_COMM_WORLD);
+
+	// ---------------------- Recursively call the function ----------------------
+	
+	return master(rank, group_size, nNodes, next_edges.size(), next_edges, labels, iteration);
 }
 
 int main(int argc, char *argv[])
@@ -241,7 +284,7 @@ int main(int argc, char *argv[])
 		MPI_Bcast(&nNodes, 1, MPI_UINT32_T, 0, MPI_COMM_WORLD);		
 
 		//Compute the connected components
-		vector<uint32_t> map = par_MPI_master_deterministic_cc(rank, group_size, nNodes, real_edge_count, edges, labels, &iteration);
+		vector<uint32_t> map = master(rank, group_size, nNodes, real_edge_count, edges, labels, &iteration);
 
 		//---------------------- End the timer and print the results ----------------------
 		double end_time = MPI_Wtime();
@@ -272,7 +315,7 @@ int main(int argc, char *argv[])
 		MPI_Bcast(&nNodes, 1, MPI_UINT32_T, 0, MPI_COMM_WORLD);
 
 		//Compute the connected components
-		par_MPI_slave_deterministic_cc(rank, group_size, nNodes);
+		slave(rank, group_size, nNodes);
 	}
 
 	//Wait for all processes to finish

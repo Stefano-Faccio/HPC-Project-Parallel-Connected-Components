@@ -1,6 +1,6 @@
 #include "mpi_parallel_cc_utils.hpp"
 
-vector<int> calculate_edges_per_processor(int rank, int group_size, const vector<Edge>& edges)
+vector<int> calculate_edges_per_processor(int group_size, const vector<Edge>& edges)
 {
 	// Calculate the number of edges to send to each processor
 	vector<int> edges_per_processor(group_size, edges.size() / group_size);
@@ -14,19 +14,12 @@ vector<int> calculate_edges_per_processor(int rank, int group_size, const vector
 	return edges_per_processor;
 }
 
-vector<int> calculate_displacements(int rank, int group_size, const vector<int>& edges_per_processor)
+vector<int> calculate_displacements(int group_size, const vector<int>& edges_per_processor)
 {
 	vector<int> displacements(group_size, 0);
 	for (int i = 1; i < group_size; i++)
 		displacements[i] = displacements[i - 1] + edges_per_processor[i - 1];
 	return displacements;
-}
-
-pair<vector<int>, vector<int>> calculate_edges_per_processor_and_displacements(int rank, int group_size, const vector<Edge>& edges)
-{
-	vector<int> edges_per_processor = calculate_edges_per_processor(rank, group_size, edges);
-	vector<int> displacements = calculate_displacements(rank, group_size, edges_per_processor);
-	return make_pair(edges_per_processor, displacements);
 }
 
 pair<uint32_t, uint32_t> count_hooks(const vector<Edge>& edges)
@@ -43,7 +36,7 @@ pair<uint32_t, uint32_t> count_hooks(const vector<Edge>& edges)
 			hooks_large_2_small++;
 		else
 		{
-			string str = "Rank: " + to_string(0) + " self loop found: " + to_string(from) + " " + to_string(to) + "\n";
+			string str = "Master - self loop found: " + to_string(from) + " " + to_string(to) + "\n";
 			cerr << str;
 		}			
 	}
