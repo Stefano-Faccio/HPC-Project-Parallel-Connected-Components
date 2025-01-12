@@ -1,0 +1,19 @@
+#!/bin/bash
+
+# 1 node 2GB memory per node
+#PBS -l select=1:ncpus=1:mem=20gb
+
+# 1 minute walltime
+#PBS -l walltime=00:30:00
+
+# execution queue
+#PBS -q short_cpuQ
+
+# specify the output file
+#PBS -o output.txt
+
+# specify the error file
+#PBS -e error.txt
+
+module load mpich-3.2
+mpirun.actual -n 1 ./serial_cc.out "/shares/HPC4DataScience/big-graph-0.txt" 
