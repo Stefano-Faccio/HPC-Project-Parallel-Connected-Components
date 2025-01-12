@@ -104,10 +104,12 @@ int main(int argc, char *argv[])
 		uint32_t number_of_cc = unordered_set<uint32_t>(map.begin(), map.end()).size();
 
 		cout << fixed;
+		cout << "------------------------------------------------" << endl;
 		cout << "File Name: " << argv[1] << endl;
 		cout << "Group Size: " << group_size << endl;
 		cout << "Number of vertices: " << nNodes << endl;
 		cout << "Number of edges: " << real_edge_count << endl;
+		cout << "Iterations: " << iteration << endl;
 		cout << "Number of connected components: " << number_of_cc << endl;
 		cout << "Elapsed time: " << elapsed_time << " seconds" << endl;
 

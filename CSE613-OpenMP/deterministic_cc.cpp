@@ -86,9 +86,15 @@ int main(int argc, char* argv[]) {
 	uint32_t number_of_cc = unordered_set<uint32_t>(map.begin(), map.end()).size();
 
 	// Print the results
-	cout << "Connected components: " << number_of_cc << endl;
-	cout << "Execution time: " << duration.count() << " ms" << endl;
+	cout << fixed;
+	cout << "------------------------------------------------" << endl;
+	cout << "File Name: " << argv[1] << endl;
+	//cout << "Group Size: " << group_size << endl;
+	cout << "Number of vertices: " << input.vertexCount() << endl;
+	cout << "Number of edges: " << real_edge_count << endl;
 	cout << "Iterations: " << iteration << endl;
+	cout << "Number of connected components: " << number_of_cc << endl;
+	cout << "Elapsed time: " << duration.count() << " ms" << endl;
 
     return 0;
 }
