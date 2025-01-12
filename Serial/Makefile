@@ -1,24 +1,24 @@
-HP_CLUSTER = 1
+HP_CLUSTER = 0
 
 ifeq ($(HP_CLUSTER), 1)
 # Compiler for HPC
-CXX = /apps/mpich-3.2/bin/mpicxx
+CXX = /apps/gcc-9.1.0/local/bin/g++-9.1.0
 else
 # Compiler for local machine
-CXX = mpiCC
+CXX = g++-14
 endif
 
 BOOST_PATH = ../boost_1_83_0/
 CXXFLAGS = -std=c++11 -O2 -fopenmp -Wall -g -pedantic -I./$(BOOST_PATH) 
 
-#Parallel version
-FILENAME_PARALLEL = ppopp_MPI_cc.cpp
-SRC_PARALLEL = $(wildcard utils/*.cpp) $(FILENAME_PARALLEL)
-TARGET_PARALLEL = $(basename $(FILENAME_PARALLEL)).out
+#Serial version
+FILENAME_SERIAL = serial_cc.cpp
+SRC_SERIAL = $(wildcard utils/DisjointSets.cpp) $(FILENAME_SERIAL) 
+TARGET_SERIAL = $(basename $(FILENAME_SERIAL)).out
 
 #Object files
 OBJDIR = obj
-OBJ_PARALLEL = $(patsubst %.cpp,$(OBJDIR)/%.o,$(SRC_PARALLEL))
+OBJ_SERIAL = $(patsubst %.cpp,$(OBJDIR)/%.o,$(SRC_SERIAL))
 
 # Color codes
 BLACK=\033[0;30m# Black
@@ -44,11 +44,11 @@ WHITE=
 NC=
 endif
 
-all: $(TARGET_PARALLEL)
+all: $(TARGET_SERIAL)
 
-$(TARGET_PARALLEL): $(OBJ_PARALLEL)
+$(TARGET_SERIAL): $(OBJ_SERIAL)
 	@echo "Linking $(PURPLE)$@$(NC)"
-	$(CXX) $(CXXFLAGS) $(OBJ_PARALLEL) -o $(TARGET_PARALLEL)
+	$(CXX) $(CXXFLAGS) $(OBJ_SERIAL) -o $(TARGET_SERIAL)
 	@echo "$(GREEN)[ DONE ]$(NC)"
 
 $(OBJDIR)/%.o: %.cpp
@@ -58,6 +58,6 @@ $(OBJDIR)/%.o: %.cpp
 
 clean:
 	@echo "$(RED)Cleaning old compiled files$(NC)"
-	rm -f $(OBJ_PARALLEL) $(TARGET_PARALLEL)
+	rm -f $(OBJ_SERIAL) $(TARGET_SERIAL)
 
 .PHONY: all clean

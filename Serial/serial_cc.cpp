@@ -1,8 +1,8 @@
-#include <mpi.h>
 #include "utils/GraphInputIterator.hpp"
 #include "utils/DisjointSets.hpp"
 #include <unordered_map>
 #include <iostream>
+#include <chrono>
 #include <cstdint>
 
 using namespace std;
@@ -14,15 +14,12 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 
-	// Initialize MPI
-	MPI_Init(&argc, &(argv));
-
-	//Start the timer
-	double start_time = MPI_Wtime();
-
 	//Open the file and read the number of vertices and edges
 	GraphInputIterator input(argv[1]);
 	cout << "Vertex count: " << input.vertexCount() << " Edge count: " << input.edgeCount() << endl;
+
+	//Start the timer
+	auto start = chrono::high_resolution_clock::now();
 	
 	//Create a disjoint set with all the vertices 
 	DisjointSets<uint32_t> disjoint_set(input.vertexCount());
@@ -50,9 +47,17 @@ int main(int argc, char* argv[])
 		}
 	}
 
-	double end_time = MPI_Wtime();
-	double elapsed_time = end_time - start_time;
+	//Stop the timer
+	auto end = chrono::high_resolution_clock::now();
+	//Calculate the duration
+	auto duration = chrono::duration_cast<chrono::milliseconds>(end - start);
 
-	cout << "Connected components: " << components.size() << endl;
-	cout << "Elapsed time: " << elapsed_time << " seconds" << endl;
+	// Print the results
+	cout << fixed;
+	cout << "------------------------------------------------" << endl;
+	cout << "File Name: " << argv[1] << endl;
+	cout << "Number of vertices: " << input.vertexCount() << endl;
+	cout << "Number of edges: " << real_edge_count << endl;
+	cout << "Number of connected components: " << components.size() << endl;
+	cout << "Elapsed time: " << duration.count() << " ms" << endl;
 }

@@ -10,14 +10,13 @@
 #include <algorithm>
 #include <unordered_set>
 //Custom libraries
-#include "../PPoPP_2018/utils/Edge.hpp"
-#include "../PPoPP_2018/utils/GraphInputIterator.hpp"
+#include "utils/Edge.hpp"
+#include "utils/GraphInputIterator.hpp"
 #include "utils/cse613_utils.hpp"
 
 using namespace std;
 
 vector<uint32_t>& par_deterministic_cc(uint32_t nNodes, const vector<Edge>& edges, vector<uint32_t>& labels, int* iteration);
-
 
 int main(int argc, char* argv[]) {	
 

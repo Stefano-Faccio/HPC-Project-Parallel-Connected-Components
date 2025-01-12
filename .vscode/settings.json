@@ -87,7 +87,8 @@
       "typeindex": "cpp",
       "typeinfo": "cpp",
       "valarray": "cpp",
-      "variant": "cpp"
+      "variant": "cpp",
+      "cassert": "cpp"
     },
     "C_Cpp.clang_tidy.enabled": true,
     "C_Cpp.clang_tidy.path": "/usr/bin/clang-tidy",

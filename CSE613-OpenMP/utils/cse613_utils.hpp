@@ -1,3 +1,5 @@
+#pragma once
+
 //OpenMP header
 #include <omp.h>
 //Standard libraries
@@ -6,7 +8,7 @@
 #include <cstdlib>
 #include <cassert>
 //Custom libraries
-#include "../../PPoPP_2018/utils/Edge.hpp"
+#include "Edge.hpp"
 
 using namespace std;
 
