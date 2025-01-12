@@ -1,6 +1,0 @@
-File Name: big.txt
-Group Size: 16
-Number of vertices: 4847571
-Number of edges: 68993773
-Number of connected components: 1876
-Elapsed time: 15.799221 seconds
