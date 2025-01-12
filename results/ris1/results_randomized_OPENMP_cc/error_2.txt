@@ -1,0 +1,1 @@
+Error iteration 46 (same edges as last iterarion): [9157413,60183549] [9157413,60183549] 

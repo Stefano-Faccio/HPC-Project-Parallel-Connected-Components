@@ -1,0 +1,57 @@
+Vertex count: 65608366 Edge count: 1806067135
+Iteration 1 Number of edges: 1806067135
+Iteration 2 Number of edges: 1774116504
+Iteration 3 Number of edges: 1754330037
+Iteration 4 Number of edges: 1741878275
+Iteration 5 Number of edges: 1733147384
+Iteration 6 Number of edges: 1726000950
+Iteration 7 Number of edges: 1705091692
+Iteration 8 Number of edges: 1642761683
+Iteration 9 Number of edges: 1418351510
+Iteration 10 Number of edges: 1000414905
+Iteration 11 Number of edges: 722995229
+Iteration 12 Number of edges: 722535630
+Iteration 13 Number of edges: 114049754
+Iteration 14 Number of edges: 80146015
+Iteration 15 Number of edges: 40849093
+Iteration 16 Number of edges: 40848170
+Iteration 17 Number of edges: 34418211
+Iteration 18 Number of edges: 1803427
+Iteration 19 Number of edges: 1546837
+Iteration 20 Number of edges: 333588
+Iteration 21 Number of edges: 212298
+Iteration 22 Number of edges: 189140
+Iteration 23 Number of edges: 188796
+Iteration 24 Number of edges: 71102
+Iteration 25 Number of edges: 71063
+Iteration 26 Number of edges: 25783
+Iteration 27 Number of edges: 6924
+Iteration 28 Number of edges: 6746
+Iteration 29 Number of edges: 3810
+Iteration 30 Number of edges: 1811
+Iteration 31 Number of edges: 1801
+Iteration 32 Number of edges: 869
+Iteration 33 Number of edges: 850
+Iteration 34 Number of edges: 848
+Iteration 35 Number of edges: 556
+Iteration 36 Number of edges: 418
+Iteration 37 Number of edges: 220
+Iteration 38 Number of edges: 136
+Iteration 39 Number of edges: 43
+Iteration 40 Number of edges: 41
+Iteration 41 Number of edges: 39
+Iteration 42 Number of edges: 38
+Iteration 43 Number of edges: 18
+Iteration 44 Number of edges: 11
+Iteration 45 Number of edges: 10
+Iteration 46 Number of edges: 7
+Iteration 47 Number of edges: 1
+Iteration 48 Number of edges: 0
+------------------------------------------------
+File Name: /shares/HPC4DataScience/big-graph-0.txt
+Group Size: 1
+Number of vertices: 65608366
+Number of edges: 1806067135
+Iterations: 48
+Number of connected components: 1
+Elapsed time: 481697 ms

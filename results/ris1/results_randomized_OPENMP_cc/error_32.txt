@@ -1,0 +1,1 @@
+Error iteration 52 (same edges as last iterarion): [4913222,52738986] 

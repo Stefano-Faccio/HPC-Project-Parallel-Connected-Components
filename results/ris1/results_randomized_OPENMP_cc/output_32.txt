@@ -1,0 +1,63 @@
+Vertex count: 65608366 Edge count: 1806067135
+Iteration 1 Number of edges: 1806067135
+Iteration 2 Number of edges: 1773123304
+Iteration 3 Number of edges: 1752575465
+Iteration 4 Number of edges: 1740557468
+Iteration 5 Number of edges: 1731273815
+Iteration 6 Number of edges: 1712644928
+Iteration 7 Number of edges: 1698372916
+Iteration 8 Number of edges: 1659264837
+Iteration 9 Number of edges: 1338135407
+Iteration 10 Number of edges: 1133495258
+Iteration 11 Number of edges: 1061554192
+Iteration 12 Number of edges: 879959729
+Iteration 13 Number of edges: 63031699
+Iteration 14 Number of edges: 21631740
+Iteration 15 Number of edges: 9909780
+Iteration 16 Number of edges: 9908240
+Iteration 17 Number of edges: 9901322
+Iteration 18 Number of edges: 285043
+Iteration 19 Number of edges: 143868
+Iteration 20 Number of edges: 143729
+Iteration 21 Number of edges: 74106
+Iteration 22 Number of edges: 74105
+Iteration 23 Number of edges: 73968
+Iteration 24 Number of edges: 73892
+Iteration 25 Number of edges: 52243
+Iteration 26 Number of edges: 52242
+Iteration 27 Number of edges: 39091
+Iteration 28 Number of edges: 30073
+Iteration 29 Number of edges: 30072
+Iteration 30 Number of edges: 29965
+Iteration 31 Number of edges: 6256
+Iteration 32 Number of edges: 3381
+Iteration 33 Number of edges: 2168
+Iteration 34 Number of edges: 2067
+Iteration 35 Number of edges: 2066
+Iteration 36 Number of edges: 917
+Iteration 37 Number of edges: 916
+Iteration 38 Number of edges: 915
+Iteration 39 Number of edges: 456
+Iteration 40 Number of edges: 204
+Iteration 41 Number of edges: 203
+Iteration 42 Number of edges: 55
+Iteration 43 Number of edges: 54
+Iteration 44 Number of edges: 19
+Iteration 45 Number of edges: 18
+Iteration 46 Number of edges: 17
+Iteration 47 Number of edges: 16
+Iteration 48 Number of edges: 15
+Iteration 49 Number of edges: 9
+Iteration 50 Number of edges: 8
+Iteration 51 Number of edges: 6
+Iteration 52 Number of edges: 1
+Iteration 53 Number of edges: 1
+Iteration 54 Number of edges: 0
+------------------------------------------------
+File Name: /shares/HPC4DataScience/big-graph-0.txt
+Group Size: 1
+Number of vertices: 65608366
+Number of edges: 1806067135
+Iterations: 54
+Number of connected components: 1
+Elapsed time: 384776 ms
