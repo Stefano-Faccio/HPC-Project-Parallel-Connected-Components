@@ -1,0 +1,21 @@
+#!/bin/bash
+
+# 2 nodes, 1 cores per node, 50GB memory per node
+#PBS -l select=64:ncpus=1:mem=45gb 
+#-l place=scatter
+
+# 1 minute walltime
+#PBS -l walltime=01:00:00
+
+# execution queue
+#PBS -q short_cpuQ
+
+# specify the output file
+#PBS -o output_64.txt
+
+# specify the error file
+#PBS -e error_64.txt
+
+module load mpich-3.2
+# 20 because 2 nodes * 10 cores per node
+mpirun.actual -n 64 ./parallel_cc.out "/shares/HPC4DataScience/big-graph-0.txt" 
