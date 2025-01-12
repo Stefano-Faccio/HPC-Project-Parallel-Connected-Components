@@ -2,7 +2,8 @@ HP_CLUSTER = 1
 
 ifeq ($(HP_CLUSTER), 1)
 # Compiler for HPC
-CXX = /apps/gcc-9.1.0/local/bin/g++-9.1.0
+#CXX = /apps/gcc-9.1.0/local/bin/g++-9.1.0
+CXX = g++
 else
 # Compiler for local machine
 CXX = g++-14
