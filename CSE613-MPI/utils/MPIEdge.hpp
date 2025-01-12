@@ -35,29 +35,4 @@ struct MPIEdge
         }
         return edge_type;
     };
-
-    /*
-    static MPI_Op MPI_FILTER_EDGE_OP;
-    // Create the MPI_Op for the filter function
-    MPI_Op_create(filter_edges, 1, &MPI_FILTER_EDGE_OP);
-
-    static void filter_edges(void *invec, void *inoutvec, int *len, MPI_Datatype *datatype)
-    {
-        Edge *invecdble = static_cast<Edge *>(invec);
-        Edge *inoutvecdble = static_cast<Edge *>(inoutvec);
-
-        // Check if all the edges are the same
-        for (int i = 0; i < *len; i++)
-        {
-            if (invecdble[i].from != inoutvecdble[i].from || invecdble[i].to != inoutvecdble[i].to)
-            {
-                inoutvecdble[i].from = -1;
-                inoutvecdble[i].to = -1;
-            }
-        }
-
-
-    }
-    */
-
 };
