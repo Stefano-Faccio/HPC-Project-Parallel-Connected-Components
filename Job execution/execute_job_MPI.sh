@@ -11,7 +11,7 @@ input="/home/stefano.faccio/input/slide.txt"
 ram=1
 
 # Lista numero di processori
-#cpus=(1 2 4 8 16 32 64 128 256 512 1024)
+#cpus=(1 2 4 8 16 32 64 128)
 cpus=(1)
 
 # Walltime
