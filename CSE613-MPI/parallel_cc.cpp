@@ -1,5 +1,6 @@
 #include <mpi.h>
 //Standard libraries
+//Standard libraries
 #include <iostream>
 #include <vector>
 #include <cstdlib>
@@ -293,9 +294,15 @@ int main(int argc, char *argv[])
 		//Count the number of connected components
 		uint32_t number_of_cc = unordered_set<uint32_t>(map.begin(), map.end()).size();
 
+		//Count the number of connected components
+		uint32_t number_of_cc = unordered_set<uint32_t>(map.begin(), map.end()).size();
+
 		cout << fixed;
 		cout << "File Name: " << argv[1] << endl;
 		cout << "Group Size: " << group_size << endl;
+		cout << "Number of vertices: " << nNodes << endl;
+		cout << "Number of edges: " << real_edge_count << endl;
+		cout << "Number of connected components: " << number_of_cc << endl;
 		cout << "Number of vertices: " << nNodes << endl;
 		cout << "Number of edges: " << real_edge_count << endl;
 		cout << "Number of connected components: " << number_of_cc << endl;
