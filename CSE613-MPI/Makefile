@@ -1,4 +1,4 @@
-HP_CLUSTER = 1
+HP_CLUSTER = 0
 
 ifeq ($(HP_CLUSTER), 1)
 # Compiler for HPC
@@ -12,7 +12,7 @@ BOOST_PATH = ../boost_1_83_0/
 CXXFLAGS = -std=c++11 -O2 -fopenmp -Wall -g -pedantic -I./$(BOOST_PATH) 
 
 #Parallel version
-FILENAME_PARALLEL = parallel_cc.cpp
+FILENAME_PARALLEL = my_MPI_cc.cpp
 SRC_PARALLEL = $(wildcard utils/*.cpp) $(FILENAME_PARALLEL)
 TARGET_PARALLEL = $(basename $(FILENAME_PARALLEL)).out
 
