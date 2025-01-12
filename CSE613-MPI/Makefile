@@ -11,11 +11,6 @@ endif
 BOOST_PATH = ../boost_1_83_0/
 CXXFLAGS = -std=c++11 -O2 -fopenmp -Wall -g -pedantic -I./$(BOOST_PATH) 
 
-#Serial version
-FILENAME_SERIAL = serial_cc.cpp
-SRC_SERIAL = $(wildcard utils/DisjointSets.cpp) $(FILENAME_SERIAL) 
-TARGET_SERIAL = $(basename $(FILENAME_SERIAL)).out
-
 #Parallel version
 FILENAME_PARALLEL = parallel_cc.cpp
 SRC_PARALLEL = $(wildcard utils/*.cpp) $(FILENAME_PARALLEL)
@@ -23,7 +18,6 @@ TARGET_PARALLEL = $(basename $(FILENAME_PARALLEL)).out
 
 #Object files
 OBJDIR = obj
-OBJ_SERIAL = $(patsubst %.cpp,$(OBJDIR)/%.o,$(SRC_SERIAL))
 OBJ_PARALLEL = $(patsubst %.cpp,$(OBJDIR)/%.o,$(SRC_PARALLEL))
 
 # Color codes
@@ -50,12 +44,7 @@ WHITE=
 NC=
 endif
 
-all: $(TARGET_SERIAL) $(TARGET_PARALLEL)
-
-$(TARGET_SERIAL): $(OBJ_SERIAL)
-	@echo "Linking $(PURPLE)$@$(NC)"
-	$(CXX) $(CXXFLAGS) $(OBJ_SERIAL) -o $(TARGET_SERIAL)
-	@echo "$(GREEN)[ DONE ]$(NC)"
+all: $(TARGET_PARALLEL)
 
 $(TARGET_PARALLEL): $(OBJ_PARALLEL)
 	@echo "Linking $(PURPLE)$@$(NC)"
@@ -69,6 +58,6 @@ $(OBJDIR)/%.o: %.cpp
 
 clean:
 	@echo "$(RED)Cleaning old compiled files$(NC)"
-	rm -f $(OBJ_SERIAL) $(OBJ_PARALLEL) $(TARGET_SERIAL) $(TARGET_PARALLEL)
+	rm -f $(OBJ_PARALLEL) $(TARGET_PARALLEL)
 
 .PHONY: all clean
