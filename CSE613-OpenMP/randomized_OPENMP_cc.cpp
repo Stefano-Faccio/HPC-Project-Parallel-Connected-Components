@@ -90,7 +90,7 @@ int main(int argc, char* argv[]) {
 	//Stop the timer
 	auto end = chrono::high_resolution_clock::now();
 	//Calculate the duration
-	auto duration = chrono::duration_cast<chrono::milliseconds>(end - start);
+	auto duration = chrono::duration_cast<chrono::seconds>(end - start);
 
 	//Print the labels at the end
 	#if false
@@ -114,7 +114,7 @@ int main(int argc, char* argv[]) {
 	cout << "Number of edges: " << real_edge_count << endl;
 	cout << "Iterations: " << iteration << endl;
 	cout << "Number of connected components: " << number_of_cc << endl;
-	cout << "Elapsed time: " << duration.count() << " ms" << endl;
+	cout << "Elapsed time: " << duration.count() << " s" << endl;
 
     return 0;
 }

@@ -1,0 +1,56 @@
+Vertex count: 65608366 Edge count: 1806067135
+Iteration 1 Number of edges: 1806067135
+Iteration 2 Number of edges: 1774586644
+Iteration 3 Number of edges: 1754740181
+Iteration 4 Number of edges: 1742275095
+Iteration 5 Number of edges: 1731645389
+Iteration 6 Number of edges: 1713542216
+Iteration 7 Number of edges: 1658137070
+Iteration 8 Number of edges: 1443585729
+Iteration 9 Number of edges: 1412087118
+Iteration 10 Number of edges: 1242567040
+Iteration 11 Number of edges: 1067464220
+Iteration 12 Number of edges: 901756749
+Iteration 13 Number of edges: 67540759
+Iteration 14 Number of edges: 26134147
+Iteration 15 Number of edges: 22548118
+Iteration 16 Number of edges: 15972034
+Iteration 17 Number of edges: 15203013
+Iteration 18 Number of edges: 492284
+Iteration 19 Number of edges: 338705
+Iteration 20 Number of edges: 226466
+Iteration 21 Number of edges: 226463
+Iteration 22 Number of edges: 187080
+Iteration 23 Number of edges: 184771
+Iteration 24 Number of edges: 184750
+Iteration 25 Number of edges: 165166
+Iteration 26 Number of edges: 165151
+Iteration 27 Number of edges: 165149
+Iteration 28 Number of edges: 156916
+Iteration 29 Number of edges: 38853
+Iteration 30 Number of edges: 5544
+Iteration 31 Number of edges: 3826
+Iteration 32 Number of edges: 3825
+Iteration 33 Number of edges: 3824
+Iteration 34 Number of edges: 443
+Iteration 35 Number of edges: 442
+Iteration 36 Number of edges: 346
+Iteration 37 Number of edges: 45
+Iteration 38 Number of edges: 43
+Iteration 39 Number of edges: 12
+Iteration 40 Number of edges: 10
+Iteration 41 Number of edges: 9
+Iteration 42 Number of edges: 5
+Iteration 43 Number of edges: 4
+Iteration 44 Number of edges: 2
+Iteration 45 Number of edges: 1
+Iteration 46 Number of edges: 1
+Iteration 47 Number of edges: 0
+------------------------------------------------
+File Name: /shares/HPC4DataScience/big-graph-0.txt
+Group Size: 1
+Number of vertices: 65608366
+Number of edges: 1806067135
+Iterations: 47
+Number of connected components: 1
+Elapsed time: 852882 ms

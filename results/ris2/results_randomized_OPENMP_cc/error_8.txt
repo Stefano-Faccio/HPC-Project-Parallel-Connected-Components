@@ -1,0 +1,5 @@
+Error iteration 45 (same edges as last iterarion): [53979573,57995824] 
+Error iteration 46 (same edges as last iterarion): [53979573,57995824] 
+Error iteration 47 (same edges as last iterarion): [53979573,57995824] 
+Error iteration 48 (same edges as last iterarion): [53979573,57995824] 
+Error iteration 49 (same edges as last iterarion): [53979573,57995824] 
