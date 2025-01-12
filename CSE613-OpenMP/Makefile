@@ -1,4 +1,4 @@
-HP_CLUSTER = 0
+HP_CLUSTER = 1
 
 ifeq ($(HP_CLUSTER), 1)
 # Compiler for HPC
