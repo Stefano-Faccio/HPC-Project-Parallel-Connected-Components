@@ -1,19 +1,19 @@
-HP_CLUSTER = 1
+HP_CLUSTER = 0
 
 ifeq ($(HP_CLUSTER), 1)
 # Compiler for HPC
 CXX = /apps/gcc-9.1.0/local/bin/g++-9.1.0
 else
 # Compiler for local machine
-CXX = g++
+CXX = g++-14
 endif
 
 BOOST_PATH = ../boost_1_83_0/
 CXXFLAGS = -std=c++11 -O2 -fopenmp -Wall -g -pedantic -I./$(BOOST_PATH) 
 
 #Deterministic and randomized version
-FILENAME_DETE = deterministic_cc.cpp
-FILENAME_RAND = randomized_cc.cpp
+FILENAME_DETE = deterministic_OPENMP_cc.cpp
+FILENAME_RAND = randomized_OPENMP_cc.cpp
 SRC_DETE =  $(wildcard utils/*.cpp) $(FILENAME_DETE) 
 SRC_RAND =  $(wildcard utils/*.cpp) $(FILENAME_RAND) 
 TARGET_DETE = $(basename $(FILENAME_DETE)).out

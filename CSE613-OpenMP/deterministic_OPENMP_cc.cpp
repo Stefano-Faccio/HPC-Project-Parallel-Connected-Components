@@ -89,7 +89,7 @@ int main(int argc, char* argv[]) {
 	cout << fixed;
 	cout << "------------------------------------------------" << endl;
 	cout << "File Name: " << argv[1] << endl;
-	//cout << "Group Size: " << group_size << endl;
+	cout << "Group Size: " << omp_get_num_threads() << endl;
 	cout << "Number of vertices: " << input.vertexCount() << endl;
 	cout << "Number of edges: " << real_edge_count << endl;
 	cout << "Iterations: " << iteration << endl;
