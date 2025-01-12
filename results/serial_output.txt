@@ -1,0 +1,7 @@
+Vertex count: 65608366 Edge count: 1806067135
+------------------------------------------------
+File Name: /shares/HPC4DataScience/big-graph-0.txt
+Number of vertices: 65608366
+Number of edges: 1806067135
+Number of connected components: 1
+Elapsed time: 585673 ms
