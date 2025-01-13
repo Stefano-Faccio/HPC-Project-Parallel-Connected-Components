@@ -21,7 +21,7 @@ mkdir -p "results_${exec_name}"
 for cpu in ${cpus[@]}; do
     # Creo uno script per ogni numero di processori
     echo "#!/bin/bash" > "results_${exec_name}/script_${cpu}.sh"
-    echo "#PBS -l select=1:ncpus=${cpu}:mem=${ram}gb -l place=scatter:excl" >> "results_${exec_name}/script_${cpu}.sh"
+    echo "#PBS -l select=1:ncpus=${cpu}:mem=${ram}gb -l place=pack:excl" >> "results_${exec_name}/script_${cpu}.sh"
     echo "#PBS -l walltime=${walltime}" >> "results_${exec_name}/script_${cpu}.sh"
     echo "#PBS -q short_cpuQ" >> "results_${exec_name}/script_${cpu}.sh"
     echo "#PBS -o results_${exec_name}/output_${cpu}.txt" >> "results_${exec_name}/script_${cpu}.sh"
