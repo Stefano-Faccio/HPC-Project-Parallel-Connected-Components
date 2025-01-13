@@ -40,6 +40,8 @@ int main(int argc, char* argv[]) {
 		assert(edge.to < input.vertexCount());
 		//Check that the edge is not a self loop
 		if (edge.to != edge.from) {
+			//Normalize the edge so that from < to
+			edge.normalize();
 			edges.push_back(edge);
 			real_edge_count++;
 		}
@@ -70,7 +72,8 @@ int main(int argc, char* argv[]) {
 	//Stop the timer
 	auto end = chrono::high_resolution_clock::now();
 	//Calculate the duration
-	auto duration = chrono::duration_cast<chrono::seconds>(end - start);
+	auto duration_s = chrono::duration_cast<chrono::seconds>(end - start);
+	auto duration_ms = chrono::duration_cast<chrono::milliseconds>(end - start);
 
 	#if false
 	//Print the labels at the end
@@ -93,7 +96,8 @@ int main(int argc, char* argv[]) {
 	cout << "Number of edges: " << real_edge_count << endl;
 	cout << "Iterations: " << iteration << endl;
 	cout << "Number of connected components: " << number_of_cc << endl;
-	cout << "Elapsed time: " << duration.count() << " s" << endl;
+	cout << "Elapsed time: " << duration_s.count() << " s" << endl;
+	cout << "Elapsed time: " << duration_ms.count() << " ms" << endl;
 
     return 0;
 }
@@ -109,43 +113,14 @@ vector<uint32_t>& par_deterministic_cc(uint32_t nNodes, const vector<Edge>& edge
 	if(edges.size() == 0 || nNodes == 0) 
 		return labels;
 
-	uint32_t hooks_small_2_large = 0, hooks_large_2_small = 0;
-
-	#pragma omp parallel shared(nNodes, edges, labels) 
+	#pragma omp parallel for shared(nNodes, edges, labels)
+	for(uint32_t i = 0; i < edges.size(); i++)
 	{
-		//Count hooks from smaller to larger indices, and vice versa
-		#pragma omp for reduction(+:hooks_small_2_large) reduction(+:hooks_large_2_small)
-		for(uint32_t i = 0; i < edges.size(); i++)
-		{
-			uint32_t from = edges[i].from;
-			uint32_t to = edges[i].to;
+		uint32_t from = edges[i].from;
+		uint32_t to = edges[i].to;
 
-			if(from < to)
-				hooks_small_2_large += 1;
-			else if(from > to)
-				hooks_large_2_small += 1;
-			else
-				cerr << "Self loop found: " << from << " " << to << endl;
-		}
-
-		//Choose hook direction to maximize #hooks
-		#pragma omp for
-		for(uint32_t i = 0; i < edges.size(); i++)
-		{
-			uint32_t from = edges[i].from;
-			uint32_t to = edges[i].to;
-
-			if(from < to)
-			{
-				if(hooks_small_2_large >= hooks_large_2_small)
-					labels[from] = to;
-			}
-			else
-			{
-				if(hooks_small_2_large < hooks_large_2_small)
-					labels[from] = to;
-			}
-		}
+		//if(labels[from] < to)
+		labels[from] = to;
 	}
 
 	// Find the roots for every node

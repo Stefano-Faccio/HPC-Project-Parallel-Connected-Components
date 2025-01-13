@@ -67,6 +67,7 @@ vector<Edge> find_rank_and_remove_edges(uint32_t nNodes, const vector<Edge>& edg
 			if(labels[from] != labels[to])
 				//Not a race condition because:
 				// if the condition is true, edges_mark[i] will be 1, so prefix_sum[i] will be different from prefix_sum[i-1]
+				// Insert the edge in the correct position
 				nextEdges[prefix_sum[i] - 1] = (labels[from] < labels[to] ? Edge{labels[from], labels[to]} : Edge{labels[to], labels[from]});			
 		}
 	}
