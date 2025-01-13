@@ -48,7 +48,8 @@ int main(int argc, char* argv[])
 	//Stop the timer
 	auto end = chrono::high_resolution_clock::now();
 	//Calculate the duration
-	auto duration = chrono::duration_cast<chrono::milliseconds>(end - start);
+	auto duration_s = chrono::duration_cast<chrono::seconds>(end - start);
+	auto duration_ms = chrono::duration_cast<chrono::milliseconds>(end - start);
 
 	unordered_map<uint32_t, uint32_t> components;
 	for (uint32_t i = 0; i < input.vertexCount(); i++) {
@@ -67,5 +68,6 @@ int main(int argc, char* argv[])
 	cout << "Number of vertices: " << input.vertexCount() << endl;
 	cout << "Number of edges: " << edges.size() << endl;
 	cout << "Number of connected components: " << components.size() << endl;
-	cout << "Elapsed time: " << duration.count() << " ms" << endl;
+	cout << "Elapsed time: " << duration_s.count() << " s" << endl;
+	cout << "Elapsed time: " << duration_ms.count() << " ms" << endl;
 }

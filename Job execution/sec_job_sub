@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 1 node 2GB memory per node
-#PBS -l select=1:ncpus=1:mem=50gb
+#PBS -l select=1:ncpus=1:mem=100gb -l place=excl
 
 # 1 minute walltime
 #PBS -l walltime=02:00:00
@@ -15,5 +15,4 @@
 # specify the error file
 #PBS -e serial_error.txt
 
-module load mpich-3.2
 ./serial_cc.out "/shares/HPC4DataScience/big-graph-0.txt" 
