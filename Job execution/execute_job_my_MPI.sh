@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Nome eseguibile
-exec_name="my_MPI_cc.out"
+exec_name="my_MPI_cc"
 
 # Nome grafo input
 input="/shares/HPC4DataScience/big-graph-0.txt"
@@ -27,7 +27,7 @@ for cpu in ${cpus[@]}; do
     echo "#PBS -o results_${exec_name}/output_${cpu}.txt" >> "results_${exec_name}/script_${cpu}.sh"
     echo "#PBS -e results_${exec_name}/error_${cpu}.txt" >> "results_${exec_name}/script_${cpu}.sh"
     echo "module load mpich-3.2" >> "results_${exec_name}/script_${cpu}.sh"
-    echo "mpirun.actual -n ${cpu} ./${exec_name} ${input}" >> "results_${exec_name}/script_${cpu}.sh"
+    echo "mpirun.actual -n ${cpu} ./${exec_name}.out ${input}" >> "results_${exec_name}/script_${cpu}.sh"
     # Lancio lo script
     qsub "results_${exec_name}/script_${cpu}.sh"
 done
