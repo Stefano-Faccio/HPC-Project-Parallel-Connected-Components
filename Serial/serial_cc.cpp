@@ -1,6 +1,7 @@
 #include "utils/GraphInputIterator.hpp"
 #include "utils/DisjointSets.hpp"
 #include <unordered_map>
+#include <unordered_set>
 #include <iostream>
 #include <chrono>
 #include <cstdint>
@@ -14,29 +15,41 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 
+	// ----------------- Read the graph -----------------
+
 	//Open the file and read the number of vertices and edges
 	GraphInputIterator input(argv[1]);
 	cout << "Vertex count: " << input.vertexCount() << " Edge count: " << input.edgeCount() << endl;
 
-	//Start the timer
-	auto start = chrono::high_resolution_clock::now();
+	vector<Edge> edges;
 	
-	//Create a disjoint set with all the vertices 
-	DisjointSets<uint32_t> disjoint_set(input.vertexCount());
-
-	uint32_t real_edge_count = 0;
+	// Read and save the graph
 	for (auto edge : input) {
 		//Check that the edge is valid i.e. the nodes are in the graph
 		assert(edge.from < input.vertexCount());
 		assert(edge.to < input.vertexCount());
 		//Check that the edge is not a self loop
-		if (edge.to != edge.from) {
-			disjoint_set.unify(edge.from, edge.to);
-			real_edge_count++;
-		}
+		if (edge.to != edge.from) 
+			edges.push_back(edge);
 	}
 
-	//Count the number of connected components
+	// ----------------- Count the connected components -----------------
+
+	//Start the timer
+	auto start = chrono::high_resolution_clock::now();
+
+	//Create a disjoint set with all the vertices 
+	DisjointSets<uint32_t> disjoint_set(input.vertexCount());
+
+	// Unify the vertices of each edge
+	for (auto edge : edges) 
+		disjoint_set.unify(edge.from, edge.to);
+
+	//Stop the timer
+	auto end = chrono::high_resolution_clock::now();
+	//Calculate the duration
+	auto duration = chrono::duration_cast<chrono::milliseconds>(end - start);
+
 	unordered_map<uint32_t, uint32_t> components;
 	for (uint32_t i = 0; i < input.vertexCount(); i++) {
 		uint32_t rep = disjoint_set.find(i);
@@ -47,17 +60,12 @@ int main(int argc, char* argv[])
 		}
 	}
 
-	//Stop the timer
-	auto end = chrono::high_resolution_clock::now();
-	//Calculate the duration
-	auto duration = chrono::duration_cast<chrono::milliseconds>(end - start);
-
 	// Print the results
 	cout << fixed;
 	cout << "------------------------------------------------" << endl;
 	cout << "File Name: " << argv[1] << endl;
 	cout << "Number of vertices: " << input.vertexCount() << endl;
-	cout << "Number of edges: " << real_edge_count << endl;
+	cout << "Number of edges: " << edges.size() << endl;
 	cout << "Number of connected components: " << components.size() << endl;
 	cout << "Elapsed time: " << duration.count() << " ms" << endl;
 }
