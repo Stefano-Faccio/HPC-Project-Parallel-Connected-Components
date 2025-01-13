@@ -66,6 +66,8 @@ int main(int argc, char *argv[])
 			// Check that the edge is not a self loop
 			if (edge.to != edge.from)
 			{
+				//Normalize the edge so that from < to
+				edge.normalize();
 				edges.push_back(edge);
 				real_edge_count++;
 			}
@@ -185,28 +187,14 @@ vector<uint32_t>& master(int rank, int group_size, uint32_t nNodes, uint32_t nEd
 	}
 	#endif
 
-	// ---------------------- Count the number of hooks ----------------------
-
-	// Count the number of hooks
-	pair<uint32_t, uint32_t> hooks = count_hooks(edges_slice);
-	uint32_t hooks_small_2_large = hooks.first;
-	uint32_t hooks_large_2_small = hooks.second;
-
-	// AllReduce the number of hooks (Use of MPI_IN_PLACE option)
-	MPI_Allreduce(MPI_IN_PLACE, &hooks_small_2_large, 1, MPI_UINT32_T, MPI_SUM, MPI_COMM_WORLD);
-	MPI_Allreduce(MPI_IN_PLACE, &hooks_large_2_small, 1, MPI_UINT32_T, MPI_SUM, MPI_COMM_WORLD);
-
 	// ---------------------- Choose the hook direction ----------------------
 
 	// Choose the hook direction
-	choose_hook_direction(edges_slice, hooks_small_2_large, hooks_large_2_small, labels);
+	choose_hook_direction(edges_slice, labels);
 
 	// Merge the labels
-	if (hooks_small_2_large >= hooks_large_2_small)
-		MPI_Reduce(MPI_IN_PLACE, labels.data(), nNodes, MPI_UINT32_T, MPI_MAX, 0, MPI_COMM_WORLD);
-	else
-		MPI_Reduce(MPI_IN_PLACE, labels.data(), nNodes, MPI_UINT32_T, MPI_MIN, 0, MPI_COMM_WORLD);
-
+	MPI_Reduce(MPI_IN_PLACE, labels.data(), nNodes, MPI_UINT32_T, MPI_MAX, 0, MPI_COMM_WORLD);
+	
 	// ---------------------- Find the roots ----------------------
 
 	// Find the roots for every node
@@ -280,27 +268,13 @@ void slave(int rank, int group_size, uint32_t nNodes)
 	}
 	#endif
 
-	// ---------------------- Count the number of hooks ----------------------
-
-	// Count the number of hooks
-	pair<uint32_t, uint32_t> hooks = count_hooks(edges_slice);
-	uint32_t hooks_small_2_large = hooks.first;
-	uint32_t hooks_large_2_small = hooks.second;
-
-	// AllReduce the number of hooks (Use of MPI_IN_PLACE option)
-	MPI_Allreduce(MPI_IN_PLACE, &hooks_small_2_large, 1, MPI_UINT32_T, MPI_SUM, MPI_COMM_WORLD);
-	MPI_Allreduce(MPI_IN_PLACE, &hooks_large_2_small, 1, MPI_UINT32_T, MPI_SUM, MPI_COMM_WORLD);
-
 	// ---------------------- Choose the hook direction ----------------------
 
 	// Choose the hook direction
-	choose_hook_direction(edges_slice, hooks_small_2_large, hooks_large_2_small, labels);
+	choose_hook_direction(edges_slice, labels);
 
 	// Merge the labels
-	if (hooks_small_2_large >= hooks_large_2_small)
-		MPI_Reduce(labels.data(), nullptr, nNodes, MPI_UINT32_T, MPI_MAX, 0, MPI_COMM_WORLD);
-	else
-		MPI_Reduce(labels.data(), nullptr, nNodes, MPI_UINT32_T, MPI_MIN, 0, MPI_COMM_WORLD);
+	MPI_Reduce(labels.data(), nullptr, nNodes, MPI_UINT32_T, MPI_MAX, 0, MPI_COMM_WORLD);
 
 	// -------------------------------- Find the roots --------------------------------
 

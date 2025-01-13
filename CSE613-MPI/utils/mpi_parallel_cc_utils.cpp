@@ -22,29 +22,7 @@ vector<int> calculate_displacements(int group_size, const vector<int>& edges_per
 	return displacements;
 }
 
-pair<uint32_t, uint32_t> count_hooks(const vector<Edge>& edges)
-{
-	uint32_t hooks_small_2_large = 0, hooks_large_2_small = 0;
-	for (uint32_t i = 0; i < edges.size(); i++)
-	{
-		uint32_t from = edges[i].from;
-		uint32_t to = edges[i].to;
-
-		if (from < to)
-			hooks_small_2_large++;
-		else if (from > to)
-			hooks_large_2_small++;
-		else
-		{
-			string str = "Master - self loop found: " + to_string(from) + " " + to_string(to) + "\n";
-			cerr << str;
-		}			
-	}
-
-	return make_pair(hooks_small_2_large, hooks_large_2_small);
-}
-
-void choose_hook_direction(const vector<Edge>& edges, uint32_t hooks_small_2_large, uint32_t hooks_large_2_small, vector<uint32_t>& labels)
+void choose_hook_direction(const vector<Edge>& edges, vector<uint32_t>& labels)
 {
 	//Choose hook direction to maximize #hooks
 	for(uint32_t i = 0; i < edges.size(); i++)
@@ -52,16 +30,8 @@ void choose_hook_direction(const vector<Edge>& edges, uint32_t hooks_small_2_lar
 		uint32_t from = edges[i].from;
 		uint32_t to = edges[i].to;
 
-		if(from < to)
-		{
-			if(hooks_small_2_large >= hooks_large_2_small)
-				labels[from] = to;
-		}
-		else
-		{
-			if(hooks_small_2_large < hooks_large_2_small)
-				labels[from] = to;
-		}
+		if(labels[from] < to)
+			labels[from] = to;
 	}
 }
 
