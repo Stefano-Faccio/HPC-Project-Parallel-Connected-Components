@@ -1,0 +1,21 @@
+Vertex count: 65608366 Edge count: 1806067135
+Iteration - 1 Number of edges: 1806067135
+Iteration - 2 Number of edges: 1767256426
+Iteration - 3 Number of edges: 1584824682
+Iteration - 4 Number of edges: 195021778
+Iteration - 5 Number of edges: 10711806
+Iteration - 6 Number of edges: 664381
+Iteration - 7 Number of edges: 12099
+Iteration - 8 Number of edges: 12098
+Iteration - 9 Number of edges: 710
+Iteration - 10 Number of edges: 8
+Iteration - 11 Number of edges: 7
+Iteration - 12 Number of edges: 0
+------------------------------------------------
+File Name: /shares/HPC4DataScience/big-graph-0.txt
+Group Size: 16
+Number of vertices: 65608366
+Number of edges: 1806067135
+Iterations: 12
+Number of connected components: 1
+Elapsed time: 298.858843 seconds
