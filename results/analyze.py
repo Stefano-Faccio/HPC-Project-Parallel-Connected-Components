@@ -7,7 +7,7 @@ MPI_my = [355, 288, 200, 244, 220, 187, 212]
 MPI_ppOpp = [139, 103, 60, 48, 42, 41, 49]
 OPENMP_rand = [1061, 747, 481, 413, 363, 384, 395]
 OPENMP_det = [308, 177, 125 , 124, 97, 94, 95]
-SERIAL = 585.6
+SERIAL = 51.08
 
 # Calcolo Speedup come tempo sequenziale / tempo parallelo
 speedup_my = [SERIAL / MPI_my[i] for i in range(len(MPI_my))]   
