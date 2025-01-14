@@ -1,0 +1,1 @@
+Error iteration 38 (same edges as last iterarion): [14327950,58258340] [14327950,65161303] 

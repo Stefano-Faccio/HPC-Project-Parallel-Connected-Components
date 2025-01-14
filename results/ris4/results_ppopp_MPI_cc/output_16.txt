@@ -1,0 +1,6 @@
+File Name: /shares/HPC4DataScience/big-graph-0.txt
+Group Size: 16
+Number of vertices: 65608366
+Number of edges: 1806067135
+Number of connected components: 1
+Elapsed time: 45.401163 seconds

@@ -1,0 +1,2 @@
+Error iteration 44 (same edges as last iterarion): [61352434,64055897] 
+Error iteration 45 (same edges as last iterarion): [61352434,64055897] 
