@@ -1,0 +1,6 @@
+# C++ object files
+obj/
+*.out
+*.o
+.vscode/
+big*
